@@ -246,7 +246,7 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
       tmp_cells[ii * params.nx + jj].speeds[0]  = cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
       tmp_cells[ii * params.nx + jj].speeds[1] = cells[ii * params.nx + x_w].speeds[1]; /* east */
       tmp_cells[ii * params.nx + jj].speeds[2]  = cells[y_s * params.nx + jj].speeds[2]; /* north */
-      tmp_cells[ii * params.nx + jj].speeds[3] = cells[ii * params.nx + w_e].speeds[3]; /* west */
+      tmp_cells[ii * params.nx + jj].speeds[3] = cells[ii * params.nx + x_e].speeds[3]; /* west */
       tmp_cells[ii * params.nx + jj].speeds[4]  = cells[y_n * params.nx + jj].speeds[4]; /* south */
       tmp_cells[ii * params.nx + jj].speeds[5] = cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
       tmp_cells[ii * params.nx + jj].speeds[6] = cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
