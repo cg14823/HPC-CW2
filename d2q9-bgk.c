@@ -341,7 +341,7 @@ int collision_rebound_av_velocity(const t_param params, t_speed* cells, t_speed*
           }
 
         // av_velocity
-        float local_density = 0.0;
+        local_density = 0.0;
 
         for (int kk = 0; kk < NSPEEDS; kk++)
         {
@@ -349,14 +349,14 @@ int collision_rebound_av_velocity(const t_param params, t_speed* cells, t_speed*
         }
 
         /* x-component of velocity */
-        float u_x = (cells[cellAccess].speeds[1]
+        u_x = (cells[cellAccess].speeds[1]
                       + cells[cellAccess].speeds[5]
                       + cells[cellAccess].speeds[8]
                       - (cells[cellAccess].speeds[3]
                          + cells[cellAccess].speeds[6]
                          + cells[cellAccess].speeds[7]));
         /* compute y velocity component */
-        float u_y = (cells[cellAccess].speeds[2]
+        u_y = (cells[cellAccess].speeds[2]
                       + cells[cellAccess].speeds[5]
                       + cells[cellAccess].speeds[6]
                       - (cells[cellAccess].speeds[4]
