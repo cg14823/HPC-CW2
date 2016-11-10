@@ -95,7 +95,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells);
-int collision_rebound_av_velocity(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
+int collision_rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 
 /* finalise, including freeing up allocated memory */
@@ -157,7 +157,8 @@ int main(int argc, char* argv[])
   {
     accelerate_flow(params, cells, obstacles);
     propagate(params, cells, tmp_cells);
-    av_vels[tt] = collision_rebound_av_velocity(params, cells, tmp_cells, obstacles);
+    collision_rebound(params, cells, tmp_cells, obstacles);
+    av_vels[tt] = av_velocity(params, cells, obstacles);
 #ifdef DEBUG
     printf("==timestep: %d==\n", tt);
     printf("av velocity: %.12E\n", av_vels[tt]);
@@ -189,7 +190,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 {
   accelerate_flow(params, cells, obstacles);
   propagate(params, cells, tmp_cells);
-  collision_rebound_av_velocity(params, cells, tmp_cells, obstacles);
+  collisionrebound(params, cells, tmp_cells, obstacles);
   return EXIT_SUCCESS;
 }
 
@@ -257,13 +258,11 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
   return EXIT_SUCCESS;
 }
 
-int collision_rebound_av_velocity(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int collision_rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
   const float w0 = 4.0 / 9.0;  /* weighting factor */
   const float w1 = 1.0 / 9.0;  /* weighting factor */
   const float w2 = 1.0 / 36.0; /* weighting factor */
-  int    tot_cells = 0;  /* no. of cells used in calculation */
-  float tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
 
   /* loop over the cells in the grid
   ** NB the collision step is called after
@@ -339,38 +338,10 @@ int collision_rebound_av_velocity(const t_param params, t_speed* cells, t_speed*
                                                     + params.omega
                                                     * (d_equ[kk] - tmp_cells[cellAccess].speeds[kk]);
           }
-
-        // av_velocity
-        local_density = 0.0;
-
-        for (int kk = 0; kk < NSPEEDS; kk++)
-        {
-          local_density += cells[cellAccess].speeds[kk];
-        }
-
-        /* x-component of velocity */
-        u_x = (cells[cellAccess].speeds[1]
-                      + cells[cellAccess].speeds[5]
-                      + cells[cellAccess].speeds[8]
-                      - (cells[cellAccess].speeds[3]
-                         + cells[cellAccess].speeds[6]
-                         + cells[cellAccess].speeds[7]));
-        /* compute y velocity component */
-        u_y = (cells[cellAccess].speeds[2]
-                      + cells[cellAccess].speeds[5]
-                      + cells[cellAccess].speeds[6]
-                      - (cells[cellAccess].speeds[4]
-                         + cells[cellAccess].speeds[7]
-                         + cells[cellAccess].speeds[8]));
-        /* accumulate the norm of x- and y- velocity components */
-        tot_u += sqrt((u_x * u_x) + (u_y * u_y))/local_density;
-        /* increase counter of inspected cells */
-        tot_cells += 1;
       }
     }
   }
-
-  return tot_u / (float)tot_cells;
+  return EXIT_SUCCESS;
 }
 
 float av_velocity(const t_param params, t_speed* cells, int* obstacles)
