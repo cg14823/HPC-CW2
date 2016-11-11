@@ -96,7 +96,6 @@ int main(int argc, char* argv[]){
   MPI_Finalize();
   free(sendbuf);
   free(recvbuf);
-  free(printbuf);
   free(temp1);
 
   for (ii = 0; ii < NX; ii++){
