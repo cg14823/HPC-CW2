@@ -40,8 +40,8 @@ int main(int argc, char* argv[]){
   left = (rank == MASTER) ? (rank + size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  local_ncols = NCOLS
-  local_nrows = 1
+  local_ncols = NCOLS;
+  local_nrows = 1;
 
   temp1 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
   //temp2 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
@@ -81,8 +81,8 @@ int main(int argc, char* argv[]){
   // at this point all tanks have 3 rows so can do its calculation
   // do calculation
 
-  for (jj = 0; i <local_ncols;jj++){
-    temp1[NX +jj] = temp1[NX +jj] + temp1[jj] +temp[NX*2 +jj];
+  for (jj = 0; jj <local_ncols;jj++){
+    temp1[NX +jj] = temp1[NX +jj] + temp1[jj] +temp1[NX*2 +jj];
   }
 
   // join grid again
@@ -98,9 +98,10 @@ int main(int argc, char* argv[]){
   free(temp1);
 
   for (ii = 0; ii < NX; ii++){
-    for(jj = 0: jj <NY; jj++){
-      printf("%d    \t",grid[ii*NX +jj]);
+    for(jj = 0; jj <NY; jj++){
+      printf("%d\t",grid[ii*NX +jj]);
     }
+    printf("\n");
   }
 
 
