@@ -1,8 +1,8 @@
 # Makefile
 
-EXE=d2q9-bgk
+EXE=testing
 
-CC=icc
+CC=mpicc
 CFLAGS= -std=c99 -O3 -fp-model fast=2
 LIBS = -lm
 
