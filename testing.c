@@ -33,7 +33,6 @@ int main(int argc, char* argv[]){
 
   MPI_Status status;
 
-  gridfinal= (int*)malloc(sizeof(int) * NX * NY);
 
   MPI_Init( &argc, &argv );
   MPI_Comm_size( MPI_COMM_WORLD, &size );
@@ -44,7 +43,7 @@ int main(int argc, char* argv[]){
 
   local_ncols = NCOLS;
   local_nrows = 1;
-
+  if (rank == 0) gridfinal= (int*)malloc(sizeof(int) * NX * NY);
   temp1 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
   //temp2 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
 
@@ -64,16 +63,16 @@ int main(int argc, char* argv[]){
 
   // send data left and receive right
 
-  MPI_Sendrecv(sendbuf,1,MPI_INT,left,tag,
-              recvbuf,1,MPI_INT,right,tag,
+  MPI_Sendrecv(sendbuf,4,MPI_INT,left,tag,
+              recvbuf,4,MPI_INT,right,tag,
             MPI_COMM_WORLD,&status);
   for (jj = 0; jj < local_ncols;jj++){
     temp1[(local_nrows +1)*NX +jj] = recvbuf[jj];
   }
 
   // send data right receive left
-  MPI_Sendrecv(sendbuf,1,MPI_INT,right,tag,
-              recvbuf,1,MPI_INT,left, tag,
+  MPI_Sendrecv(sendbuf,4,MPI_INT,right,tag,
+              recvbuf,4,MPI_INT,left, tag,
               MPI_COMM_WORLD, &status);
 
   for (jj = 0; jj < local_ncols;jj++){
@@ -88,8 +87,26 @@ int main(int argc, char* argv[]){
   }
 
   // join grid again
-  for(jj = 0; jj> local_ncols; jj++){
-    gridfinal[rank*NX +jj] = temp1[NX +jj];
+  if (rank == 0){
+    for(jj =0; jj<local_ncols; jj++){
+      printf("%3d ",temp1[NX +jj]);
+      gridfinal[jj] = temp1[NX +jj];
+    }
+    printf("\n");
+    for(int k= 1; k <size;k++){
+      MPI_Recv(recvbuf,4,MPI_INT,k,tag,MPI_COMM_WORLD,&status);
+    	for(jj=0;jj < 4;jj++) {
+    	  printf("%3d ",recvbuf[jj]);
+    	}
+      printf("\n");
+    }
+    else {
+      for (ii = 0; ii<local_ncols;ii++){
+        sendbuf[ii] = temp1[ NX +ii ];
+      }
+      MPI_Send(sendbuf,4,MPI_INT,0,tag,MPI_COMM_WORLD);
+    }
+
   }
 
   /* don't forget to tidy up when we're done */
