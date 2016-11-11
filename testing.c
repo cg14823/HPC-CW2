@@ -119,7 +119,8 @@ int main(int argc, char* argv[]){
       }
       MPI_Send(sendbuf,4,MPI_INT,0,tag,MPI_COMM_WORLD);
     }
-}
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
   /* don't forget to tidy up whgedten we're done */
   MPI_Finalize();
   free(sendbuf);
