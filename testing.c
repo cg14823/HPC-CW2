@@ -87,6 +87,9 @@ int main(int argc, char* argv[]){
   }
 
   // join grid again
+  for (ii = 0; ii< NX; ii++){
+    grid[rank*NX +ii] = temp1[NX +ii];
+  }
   if (rank == 0){
     for(jj =0; jj<local_ncols; jj++){
       printf("%3d ",temp1[NX +jj]);
@@ -109,7 +112,7 @@ int main(int argc, char* argv[]){
     MPI_Send(sendbuf,4,MPI_INT,0,tag,MPI_COMM_WORLD);
   }
 
-  /* don't forget to tidy up when we're done */
+  /* don't forget to tidy up whgedten we're done */
   MPI_Finalize();
   free(sendbuf);
   free(recvbuf);
@@ -117,7 +120,7 @@ int main(int argc, char* argv[]){
 
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
-      printf("%d\t",gridfinal[ii*NX +jj]);
+      printf("%d\t",grid[ii*NX +jj]);
     }
     printf("\n");
   }
