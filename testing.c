@@ -32,6 +32,8 @@ int main(int argc, char* argv[]){
   int right;
 
   MPI_Status status;
+
+  grid= (int*)malloc(sizeof(int) * NX * NY);
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
       grid[ii*NX +jj] = ii;
