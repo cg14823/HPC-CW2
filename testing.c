@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
 
   int *sendbuf;       /* buffer to hold values to send */
   int *recvbuf;       /* buffer to hold received values */
-  double *printbuf;      /* buffer to hold values for printing */
+  int *gridfinal;      /* buffer to hold values for printing */
 
   int tag = 0; /* scope for adding extra information to a message */
 
@@ -32,6 +32,8 @@ int main(int argc, char* argv[]){
   int right;
 
   MPI_Status status;
+
+  gridfinal= (int*)malloc(sizeof(int) * NX * NY);
 
   MPI_Init( &argc, &argv );
   MPI_Comm_size( MPI_COMM_WORLD, &size );
@@ -87,7 +89,7 @@ int main(int argc, char* argv[]){
 
   // join grid again
   for(jj = 0; jj> local_ncols; jj++){
-    grid[rank*NX +jj] = temp1[NX +jj];
+    gridfinal[rank*NX +jj] = temp1[NX +jj];
   }
 
   /* don't forget to tidy up when we're done */
@@ -99,7 +101,7 @@ int main(int argc, char* argv[]){
 
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
-      printf("%d\t",grid[ii*NX +jj]);
+      printf("%d\t",gridfinal[ii*NX +jj]);
     }
     printf("\n");
   }
