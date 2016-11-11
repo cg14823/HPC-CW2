@@ -100,13 +100,12 @@ int main(int argc, char* argv[]){
     	}
       printf("\n");
     }
-    else {
-      for (ii = 0; ii<local_ncols;ii++){
-        sendbuf[ii] = temp1[ NX +ii ];
-      }
-      MPI_Send(sendbuf,4,MPI_INT,0,tag,MPI_COMM_WORLD);
+  }
+  else {
+    for (ii = 0; ii<local_ncols;ii++){
+      sendbuf[ii] = temp1[ NX +ii ];
     }
-
+    MPI_Send(sendbuf,4,MPI_INT,0,tag,MPI_COMM_WORLD);
   }
 
   /* don't forget to tidy up when we're done */
