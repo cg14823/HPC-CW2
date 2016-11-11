@@ -92,6 +92,7 @@ int main(int argc, char* argv[]){
       for(jj =0; jj<local_ncols; jj++){
         printf("%3d ",temp1[NX +jj]);
         gridfinal[jj] = temp1[NX +jj];
+        grid[jj] = temp1[NX +jj];
       }
       printf("\n");
       for(int k= 1; k <size;k++){
@@ -99,6 +100,7 @@ int main(int argc, char* argv[]){
       	for(jj=0;jj < 4;jj++) {
       	  printf("%3d ",recvbuf[jj]);
           gridfinal[k*NX +jj] = recvbuf[jj];
+          grid[k*NX +jj] = recvbuf[jj];
       	}
         printf("\n");
       }
