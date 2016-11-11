@@ -88,9 +88,6 @@ int main(int argc, char* argv[]){
     }
 
     // join grid again
-    for (ii = 0; ii< NX; ii++){
-      grid[rank*NX ]
-    }
     if (rank == 0){
       for(jj =0; jj<local_ncols; jj++){
         printf("%3d ",temp1[NX +jj]);
@@ -101,7 +98,7 @@ int main(int argc, char* argv[]){
         MPI_Recv(recvbuf,4,MPI_INT,k,tag,MPI_COMM_WORLD,&status);
       	for(jj=0;jj < 4;jj++) {
       	  printf("%3d ",recvbuf[jj]);
-          gridfinal[k*NX +jj] = recvbuff[jj];
+          gridfinal[k*NX +jj] = recvbuf[jj];
       	}
         printf("\n");
       }
