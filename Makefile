@@ -2,14 +2,14 @@
 
 EXE=testing
 
-CC=mpicc
+CC=icc
 CFLAGS= -std=c99 -O3 -fp-model fast=2
 LIBS = -lm
 
 FINAL_STATE_FILE=./final_state.dat
 AV_VELS_FILE=./av_vels.dat
-REF_FINAL_STATE_FILE=check/128x256.final_state.dat
-REF_AV_VELS_FILE=check/128x256.av_vels.dat
+REF_FINAL_STATE_FILE=check/128x128.final_state.dat
+REF_AV_VELS_FILE=check/128x128.av_vels.dat
 
 all: $(EXE)
 
