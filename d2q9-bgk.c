@@ -161,8 +161,8 @@ int main(int argc, char* argv[])
   {
 
     // --------------------------------------------------- START ACCELERATE_FLOW
-    double w1 = params.density * params.accel / 9.0;
-    double w2 = params.density * params.accel / 36.0;
+    double aw1 = params.density * params.accel / 9.0;
+    double aw2 = params.density * params.accel / 36.0;
 
     /* modify the 2nd row of the grid */
     int ii = params.ny - 2;
@@ -172,18 +172,18 @@ int main(int argc, char* argv[])
       /* if the cell is not occupied and
       ** we don't send a negative density */
       if (!obstacles[ii * params.nx + jj]
-          && (cells[ii * params.nx + jj].speeds[3] - w1) > 0.0
-          && (cells[ii * params.nx + jj].speeds[6] - w2) > 0.0
-          && (cells[ii * params.nx + jj].speeds[7] - w2) > 0.0)
+          && (cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0
+          && (cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0
+          && (cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0)
       {
         /* increase 'east-side' densities */
-        cells[ii * params.nx + jj].speeds[1] += w1;
-        cells[ii * params.nx + jj].speeds[5] += w2;
-        cells[ii * params.nx + jj].speeds[8] += w2;
+        cells[ii * params.nx + jj].speeds[1] += aw1;
+        cells[ii * params.nx + jj].speeds[5] += aw2;
+        cells[ii * params.nx + jj].speeds[8] += aw2;
         /* decrease 'west-side' densities */
-        cells[ii * params.nx + jj].speeds[3] -= w1;
-        cells[ii * params.nx + jj].speeds[6] -= w2;
-        cells[ii * params.nx + jj].speeds[7] -= w2;
+        cells[ii * params.nx + jj].speeds[3] -= aw1;
+        cells[ii * params.nx + jj].speeds[6] -= aw2;
+        cells[ii * params.nx + jj].speeds[7] -= aw2;
       }
     }
     // ------------------------------------------- START PROPAGATE
