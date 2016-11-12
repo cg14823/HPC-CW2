@@ -50,21 +50,26 @@ int main(int argc, char* argv[]){
 
   local_ncols = NCOLS;
   local_nrows = 1;
+
+
+  // allocate space for send and recv buffer
+  sendbuf = (int*)malloc(sizeof(int) * local_ncols);
+  recvbuf = (int*)malloc(sizeof(int) * local_ncols);
+
   if (rank == 0) gridfinal= (int*)malloc(sizeof(int) * NX * NY);
   temp1 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
   //temp2 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
 
-  sendbuf = (int*)malloc(sizeof(int) * local_ncols);
-  recvbuf = (int*)malloc(sizeof(int) * local_ncols);
-  for (int it = 0; it < 3; it++){
-    // devide grid between 4 threads
-    for(ii=0;ii<local_nrows;ii++) {
-      for(jj=0;jj<local_ncols;jj++) {
-        temp1[(ii+1) * NX +jj] = grid[(ii+rank) * NX +jj];
-      }
+  // devide grid between 4 threads
+  for(ii=0;ii<local_nrows;ii++) {
+    for(jj=0;jj<local_ncols;jj++) {
+      temp1[(ii+1) * NX +jj] = grid[(ii+rank) * NX +jj];
     }
-    // copy data to be send left and right in this specific case
+  }
 
+  for (int it = 0; it < 3; it++){
+
+    // copy data to be send left and right in this specific case
     for (ii = 0; ii<local_ncols;ii++){
       sendbuf[ii] = temp1[ NX +ii ];
     }
