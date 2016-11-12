@@ -55,6 +55,7 @@
 #include<time.h>
 #include<sys/time.h>
 #include<sys/resource.h>
+#include "mpi.h"
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -149,49 +150,125 @@ int main(int argc, char* argv[])
 
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels);
+  int ii, jj;
   int rank;
   int left;
   int right;
   int local;
+  int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
+  int local_ncols = params.nx;      // devide the grid by rows
+
+  MPI_Status status;
+
+
+  double *sendgrid;
+  double *sendtempgrid;
+  double *recvgrid;
+  double *sendtempgrid;
+  double *partial_cells;
+  double *partial_temp_cells;
+  int tag = 0; /* scope for adding extra information to a message */
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr, NULL);
   tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 
+  MPI_Init( &argc, &argv );
+  MPI_Comm_size( MPI_COMM_WORLD, &size );
+  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+
+  left = (rank == MASTER) ? (rank + size - 1) : (rank - 1);
+  right = (rank + 1) % size;
+
+  sendgrid = (double*)malloc(sizeof(double*) * local_ncols);
+  recvgrid = (double*)malloc(sizeof(double*) * local_ncols);
+  sendtempgrid = (double*)malloc(sizeof(double*) * local_ncols);
+  recvtempgrid = (double*)malloc(sizeof(double*) * local_ncols);
+
+  partial_cells = (double*)malloc(sizeof(double*) * local_ncols * (local_nrows + 2));
+  partial_temp_cells = (double*)malloc(sizeof(double*) * local_ncols * (local_nrows + 2));
+
+  for (ii = 0; ii< local_nrows;ii++){
+    for(jj = 0; jj<local_ncols;jj++){
+      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)+jj];
+      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
+    }
+  }
+
   for (int tt = 0; tt < params.maxIters; tt++)
   {
+
+    // copy data to be send left 1st row
+    for (ii = 0; ii<local_ncols;ii++){
+      sendgrid[ii] = partial_cells[params.nx + ii];
+      sendtempgrid[ii] = partial_temp_cells[params.nx +ii];
+    }
+    // send data left and receive right
+    MPI_Sendrecv(sendgrid,local_ncols,MPI_DOUBLE,left,tag,
+                recvgrid,local_ncols,MPI_DOUBLE,right,tag,
+                MPI_COMM_WORLD,&status);
+
+    MPI_Sendrecv(sendtempgrid,local_ncols,MPI_DOUBLE,left,tag,
+                recvtempgrid,local_ncols,MPI_DOUBLE,right,tag,
+                MPI_COMM_WORLD,&status);
+
+    for (jj = 0; jj < local_ncols;jj++){
+      partial_cells[(local_nrows +1)*params.nx +jj] = recvgrid[jj];
+      partial_temp_cells[(local_nrows +1)*params.nx +jj] = recvtempgrid[jj];
+    }
+
+    // copy data to send right last row
+    for (ii = 0; ii<local_ncols;ii++){
+      sendgrid[ii] = partial_cells[local_nrows * params.nx + ii];
+      sendtempgrid[ii] = partial_temp_cells[local_nrows * params.nx +ii];
+    }
+
+    // send data right and receive left
+    MPI_Sendrecv(sendgrid,local_ncols,MPI_DOUBLE,right,tag,
+                recvgrid,local_ncols,MPI_DOUBLE,left,tag,
+                MPI_COMM_WORLD,&status);
+
+    MPI_Sendrecv(sendtempgrid,local_ncols,MPI_DOUBLE,right,tag,
+                recvtempgrid,local_ncols,MPI_DOUBLE,left,tag,
+                MPI_COMM_WORLD,&status);
+
+    for (jj = 0; jj < local_ncols;jj++){
+      partial_cells[jj] = recvgrid[jj];
+      partial_temp_cells[jj] = recvtempgrid[jj];
+    }
 
     // --------------------------------------------------- START ACCELERATE_FLOW
     double aw1 = params.density * params.accel / 9.0;
     double aw2 = params.density * params.accel / 36.0;
 
     /* modify the 2nd row of the grid */
-    int ii = params.ny - 2;
+    ii = params.ny - 2;
 
-    for (int jj = 0; jj < params.nx; jj++)
+    for (jj = 0; jj < params.nx; jj++)
     {
       /* if the cell is not occupied and
       ** we don't send a negative density */
       if (!obstacles[ii * params.nx + jj]
-          && (cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0
-          && (cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0
-          && (cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0)
+          && (partial_cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0
+          && (partial_cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0
+          && (partial_cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0)
       {
         /* increase 'east-side' densities */
-        cells[ii * params.nx + jj].speeds[1] += aw1;
-        cells[ii * params.nx + jj].speeds[5] += aw2;
-        cells[ii * params.nx + jj].speeds[8] += aw2;
+        partial_cells[ii * params.nx + jj].speeds[1] += aw1;
+        partial_cells[ii * params.nx + jj].speeds[5] += aw2;
+        partial_cells[ii * params.nx + jj].speeds[8] += aw2;
         /* decrease 'west-side' densities */
-        cells[ii * params.nx + jj].speeds[3] -= aw1;
-        cells[ii * params.nx + jj].speeds[6] -= aw2;
-        cells[ii * params.nx + jj].speeds[7] -= aw2;
+        partial_cells[ii * params.nx + jj].speeds[3] -= aw1;
+        partial_cells[ii * params.nx + jj].speeds[6] -= aw2;
+        partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
       }
     }
     // ------------------------------------------- START PROPAGATE
-    for (int ii = 0; ii < params.ny; ii++)
+    for (ii = 0; ii < params.ny; ii++)
     {
       int y_n = (ii + 1) % params.ny;
       int y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
-      for (int jj = 0; jj < params.nx; jj++)
+      for (jj = 0; jj < params.nx; jj++)
       {
         /* determine indices of axis-direction neighbours
         ** respecting periodic boundary conditions (wrap around) */
@@ -201,15 +278,15 @@ int main(int argc, char* argv[])
         /* propagate densities to neighbouring cells, following
         ** appropriate directions of travel and writing into
         ** scratch space grid */
-        tmp_cells[ii * params.nx + jj].speeds[0]  = cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
-        tmp_cells[ii * params.nx + jj].speeds[1] = cells[ii * params.nx + x_w].speeds[1]; /* east */
-        tmp_cells[ii * params.nx + jj].speeds[2]  = cells[y_s * params.nx + jj].speeds[2]; /* north */
-        tmp_cells[ii * params.nx + jj].speeds[3] = cells[ii * params.nx + x_e].speeds[3]; /* west */
-        tmp_cells[ii * params.nx + jj].speeds[4]  = cells[y_n * params.nx + jj].speeds[4]; /* south */
-        tmp_cells[ii * params.nx + jj].speeds[5] = cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
-        tmp_cells[ii * params.nx + jj].speeds[6] = cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
-        tmp_cells[ii * params.nx + jj].speeds[7] = cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
-        tmp_cells[ii * params.nx + jj].speeds[8] = cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+        partial_temp_cells[ii * params.nx + jj].speeds[0]  = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        partial_temp_cells[ii * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+        partial_temp_cells[ii * params.nx + jj].speeds[2]  = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
+        partial_temp_cells[ii * params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+        partial_temp_cells[ii * params.nx + jj].speeds[4]  = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
+        partial_temp_cells[ii * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+        partial_temp_cells[ii * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+        partial_temp_cells[ii * params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+        partial_temp_cells[ii * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
       }
     }
     //============================================= START collisionrebound
@@ -223,9 +300,9 @@ int main(int argc, char* argv[])
     ** the propagate step and so values of interest
     ** are in the scratch-space grid */
 
-    for (int ii = 0; ii < params.ny; ii++)
+    for (ii = 0; ii < params.ny; ii++)
     {
-      for (int jj = 0; jj < params.nx; jj++)
+      for (jj = 0; jj < params.nx; jj++)
       {
         /* don't consider occupied cells */
         if (!obstacles[ii * params.nx + jj])
@@ -235,23 +312,23 @@ int main(int argc, char* argv[])
           double local_density = 0.0;
           for (int kk = 0; kk < NSPEEDS; kk++)
           {
-            local_density += tmp_cells[cellAccess].speeds[kk];
+            local_density += partial_temp_cells[cellAccess].speeds[kk];
           }
           /* compute x velocity component */
-          double u_x = (tmp_cells[cellAccess].speeds[1]
-                        + tmp_cells[cellAccess].speeds[5]
-                        + tmp_cells[cellAccess].speeds[8]
-                        - (tmp_cells[cellAccess].speeds[3]
-                           + tmp_cells[cellAccess].speeds[6]
-                           + tmp_cells[cellAccess].speeds[7]))
+          double u_x = (partial_temp_cells[cellAccess].speeds[1]
+                        + partial_temp_cells[cellAccess].speeds[5]
+                        + partial_temp_cells[cellAccess].speeds[8]
+                        - (partial_temp_cells[cellAccess].speeds[3]
+                           + partial_temp_cells[cellAccess].speeds[6]
+                           + partial_temp_cells[cellAccess].speeds[7]))
                        / local_density;
           /* compute y velocity component */
-          double u_y = (tmp_cells[cellAccess].speeds[2]
-                        + tmp_cells[cellAccess].speeds[5]
-                        + tmp_cells[cellAccess].speeds[6]
-                        - (tmp_cells[cellAccess].speeds[4]
-                           + tmp_cells[cellAccess].speeds[7]
-                           + tmp_cells[cellAccess].speeds[8]))
+          double u_y = (partial_temp_cells[cellAccess].speeds[2]
+                        + partial_temp_cells[cellAccess].speeds[5]
+                        + partial_temp_cells[cellAccess].speeds[6]
+                        - (partial_temp_cells[cellAccess].speeds[4]
+                           + partial_temp_cells[cellAccess].speeds[7]
+                           + partial_temp_cells[cellAccess].speeds[8]))
                        / local_density;
 
           /* velocity squared */
@@ -275,20 +352,20 @@ int main(int argc, char* argv[])
 
           for (int kk = 0; kk < NSPEEDS; kk++)
             {
-              cells[cellAccess].speeds[kk] = tmp_cells[cellAccess].speeds[kk]
+              partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess].speeds[kk]
                                                       + params.omega
-                                                      * (d_equ[kk] - tmp_cells[cellAccess].speeds[kk]);
+                                                      * (d_equ[kk] - partial_temp_cells[cellAccess].speeds[kk]);
             }
         }
         else{
-          cells[ii * params.nx + jj].speeds[1] = tmp_cells[ii * params.nx + jj].speeds[3];
-          cells[ii * params.nx + jj].speeds[2] = tmp_cells[ii * params.nx + jj].speeds[4];
-          cells[ii * params.nx + jj].speeds[3] = tmp_cells[ii * params.nx + jj].speeds[1];
-          cells[ii * params.nx + jj].speeds[4] = tmp_cells[ii * params.nx + jj].speeds[2];
-          cells[ii * params.nx + jj].speeds[5] = tmp_cells[ii * params.nx + jj].speeds[7];
-          cells[ii * params.nx + jj].speeds[6] = tmp_cells[ii * params.nx + jj].speeds[8];
-          cells[ii * params.nx + jj].speeds[7] = tmp_cells[ii * params.nx + jj].speeds[5];
-          cells[ii * params.nx + jj].speeds[8] = tmp_cells[ii * params.nx + jj].speeds[6];
+          partial_cells[ii * params.nx + jj].speeds[1] = partial_temp_cells[ii * params.nx + jj].speeds[3];
+          partial_cells[ii * params.nx + jj].speeds[2] = partial_temp_cells[ii * params.nx + jj].speeds[4];
+          partial_cells[ii * params.nx + jj].speeds[3] = partial_temp_cells[ii * params.nx + jj].speeds[1];
+          partial_cells[ii * params.nx + jj].speeds[4] = partial_temp_cells[ii * params.nx + jj].speeds[2];
+          partial_cells[ii * params.nx + jj].speeds[5] = partial_temp_cells[ii * params.nx + jj].speeds[7];
+          partial_cells[ii * params.nx + jj].speeds[6] = partial_temp_cells[ii * params.nx + jj].speeds[8];
+          partial_cells[ii * params.nx + jj].speeds[7] = partial_temp_cells[ii * params.nx + jj].speeds[5];
+          partial_cells[ii * params.nx + jj].speeds[8] = partial_temp_cells[ii * params.nx + jj].speeds[6];
         }
       }
     }
