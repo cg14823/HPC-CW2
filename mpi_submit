@@ -4,8 +4,8 @@
 #!
 #! Name of job
 
-#PBS -N MPI
-#PBS -o OUT
+#PBS -N d2q9-bgk
+#PBS -o d2q9-bgk.out
 #PBS -q teaching
 
 #! Number of nodes (in this case 1 node with 4 CPU cores)
@@ -22,7 +22,10 @@
 application="./d2q9-bgk"
 
 #! Run options for the application
-options=""
+options="input_128x128.params obstacles_128x128.dat"
+
+#! Mail to user if job aborts
+#PBS -m a
 
 ###############################################################
 ### You should not have to change anything below this line ####
