@@ -355,7 +355,7 @@ int main(int argc, char* argv[])
           partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess].speeds[7];
           partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess].speeds[8];
           partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess].speeds[5];
-          partial_cells[cellAccessj].speeds[8] = partial_temp_cells[cellAccess].speeds[6];
+          partial_cells[cellAccess].speeds[8] = partial_temp_cells[cellAccess].speeds[6];
         }
       }
     }
