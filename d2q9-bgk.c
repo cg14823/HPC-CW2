@@ -161,12 +161,10 @@ int main(int argc, char* argv[])
   MPI_Status status;
 
   double local_density = 0.0;
-  double *sendgrid;
-  double *sendtempgrid;
-  double *recvgrid;
-  double *sendtempgrid;
-  double *partial_cells;
-  double *partial_temp_cells;
+  t_speed *sendgrid;
+  t_speed *recvgrid;
+  t_speed *partial_cells;
+  t_speed *partial_temp_cells;
   int tag = 0; /* scope for adding extra information to a message */
   /* iterate for maxIters timesteps */
   gettimeofday(&timstr, NULL);
@@ -181,11 +179,11 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (rank + size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  sendgrid = (double*)malloc(sizeof(double*) * local_ncols);
-  recvgrid = (double*)malloc(sizeof(double*) * local_ncols);
+  sendgrid = (t_speed*)malloc(sizeof(t_speed*) * local_ncols);
+  recvgrid = (t_speed*)malloc(sizeof(t_speed*) * local_ncols);
 
-  partial_cells = (double*)malloc(sizeof(double*) * local_ncols * (local_nrows + 2));
-  partial_temp_cells = (double*)malloc(sizeof(double*) * local_ncols * (local_nrows + 2));
+  partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
+  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
 
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
