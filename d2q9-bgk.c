@@ -154,6 +154,7 @@ int main(int argc, char* argv[])
   int rank;
   int left;
   int right;
+  int size;
   int local;
   int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
   int local_ncols = params.nx;      // devide the grid by rows
@@ -354,7 +355,7 @@ int main(int argc, char* argv[])
           partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess].speeds[7];
           partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess].speeds[8];
           partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess].speeds[5];
-          partial_cells[cellAccessj].speeds[8] = partial_temp_cellssh[cellAccess].speeds[6];
+          partial_cells[cellAccessj].speeds[8] = partial_temp_cells[cellAccess].speeds[6];
         }
       }
     }
@@ -406,8 +407,8 @@ int main(int argc, char* argv[])
     }
     double globaltot_u;
     double globaltotcells;
-    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_FLOAT, MPI_SUM,0, MPI_COMM_WORLD);
 
     if (rank == MASTER){
       av_vels[tt] = globaltot_u/globaltotcells;
