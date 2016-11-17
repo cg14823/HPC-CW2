@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
     for (ii = 0; ii < NX; ii++){
       for(jj = 0; jj <NY; jj++){
         for(int val = 0; val < 9; val++ ){
-          printf("%d ",grid[ii*NX +jj].speeds[val]);
+          printf("%.1f ",grid[ii*NX +jj].speeds[val]);
         }
       }
       printf("\n");
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]){
       gridfinal[jj] = temp1[NX +jj];
       grid[jj]= temp1[NX +jj];
       for(int val = 0; val < 9; val++ ){
-        printf("%3d ",temp1[NX +jj].speeds[val]);
+        printf("%.1f ",temp1[NX +jj].speeds[val]);
       }
     }
     printf("\n");
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
       MPI_Recv(recvbuf,local_ncols*9,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
     	for(jj=0;jj < 4;jj++) {
         for(int val = 0; val < 9; val++ ){
-  	     printf("%3d ",recvbuf[local_ncols* jj+val]);
+  	     printf("%.1f ",recvbuf[local_ncols* jj+val]);
          gridfinal[k*NX +jj].speeds[val]  = recvbuf[local_ncols* jj +val];
          grid[k*NX +jj].speeds[val] = recvbuf[local_ncols* jj +val];
         }
