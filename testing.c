@@ -35,8 +35,6 @@ int main(int argc, char* argv[]){
   int rank;
   int left;
   int right;
-  MPI_Dataype tspeed;
-  MPI_Dataype type[1] = {MPI_DOUBLE};
   int blocklen[1] = {9};
   MPI_Aint disp[1] ={0};
 
