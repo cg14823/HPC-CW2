@@ -18,7 +18,6 @@ int main(int argc, char* argv[]){
   t_speed *grid;
 
   t_speed *temp1;
-  int *temp2;
 
   int ii, jj;
   int iter;
@@ -36,21 +35,17 @@ int main(int argc, char* argv[]){
   int rank;
   int left;
   int right;
-  MPI_Datatype tspeed;
+  MPI_Type tspeed;
   MPI_Status status;
 
-  printf("Original Grid\n");
   grid= (t_speed*)malloc(sizeof(t_speed) * NX * NY);
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
       for(int val = 0; val < 9; val++ ){
         grid[ii*NX +jj].speeds[val] = ii;
-        printf("%3d ",ii);
       }
     }
-    printf("\n");
   }
-  printf("\n");
 
 
   MPI_Init( &argc, &argv );
@@ -72,7 +67,6 @@ int main(int argc, char* argv[]){
 
   if (rank == 0) gridfinal= (t_speed*)malloc(sizeof(t_speed) * NX * NY);
   temp1 = (t_speed*)malloc(sizeof(t_speed) * ((local_nrows+2)*local_ncols));
-  //temp2 = (int*)malloc(sizeof(int) * ((local_nrows+2)*local_ncols));
 
   // devide grid between 4 threads
   for(ii=0;ii<local_nrows;ii++) {
@@ -86,7 +80,7 @@ int main(int argc, char* argv[]){
   // copy data to be send left and right in this specific case
   for (ii = 0; ii<local_ncols;ii++){
     for(int val = 0; val < 9; val++ ){
-        sendbuf[ii].speeds[val]  = temp1[ NX +ii ].speeds[val] ;
+        sendbuf[ii].speeds[val]  = temp1[ NX +ii ].speeds[val];
     }
   }
 
@@ -98,7 +92,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[(local_nrows +1)*NX +jj].speeds[val] = recvbuf[jj].speeds[val] ;
+      temp1[(local_nrows +1)*NX +jj].speeds[val] = recvbuf[jj].speeds[val];
     }
   }
 
@@ -109,7 +103,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[jj].speeds[val] = recvbuf[jj].speeds[val] ;
+      temp1[jj].speeds[val] = recvbuf[jj].speeds[val];
     }
   }
 
