@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
   for(ii=0;ii<local_nrows;ii++) {
     for(jj=0;jj<local_ncols;jj++) {
       for(int val = 0; val < 9; val++ ){
-          temp1[(ii+1) * NX +jj] = grid[(ii+rank) * NX +jj][val];
+          temp1[(ii+1) * NX +jj].speeds[val] = grid[(ii+rank) * NX +jj].speeds[val];
       }
     }
   }
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]){
   // copy data to be send left and right in this specific case
   for (ii = 0; ii<local_ncols;ii++){
     for(int val = 0; val < 9; val++ ){
-        sendbuf[ii][val] = temp1[ NX +ii ][val];
+        sendbuf[ii].speeds[val]  = temp1[ NX +ii ].speeds[val] ;
     }
   }
 
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[(local_nrows +1)*NX +jj][val] = recvbuf[jj][val];
+      temp1[(local_nrows +1)*NX +jj].speeds[val] = recvbuf[jj].speeds[val] ;
     }
   }
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[jj][val] = recvbuf[jj][val];
+      temp1[jj][val] = recvbuf[jj].speeds[val] ;
     }
   }
 
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj <local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[NX +jj][val] = temp1[NX +jj][val] + temp1[jj][val] +temp1[NX*2 +jj][val];
+      temp1[NX +jj].speeds[val]  = temp1[NX +jj].speeds[val]  + temp1[jj].speeds[val] +temp1[NX*2 +jj].speeds[val] ;
     }
   }
 
@@ -122,9 +122,9 @@ int main(int argc, char* argv[]){
   if (rank == 0){
     for(jj =0; jj<local_ncols; jj++){
       for(int val = 0; val < 9; val++ ){
-        printf("%3d ",temp1[NX +jj][val]);
-        gridfinal[jj][val] = temp1[NX +jj][val];
-        grid[jj][val] = temp1[NX +jj][val];
+        printf("%3d ",temp1[NX +jj].speeds[val]);
+        gridfinal[jj][val] = temp1[NX +jj].speeds[val];
+        grid[jj][val] = temp1[NX +jj].speeds[val];
       }
     }
     printf("\n");
@@ -132,9 +132,9 @@ int main(int argc, char* argv[]){
       MPI_Recv(recvbuf,local_ncols,tspeed,k,tag,MPI_COMM_WORLD,&status);
     	for(jj=0;jj < 4;jj++) {
         for(int val = 0; val < 9; val++ ){
-  	     printf("%3d ",recvbuf[jj][val]);
-         gridfinal[k*NX +jj][val] = recvbuf[jj][val];
-         grid[k*NX +jj][val] = recvbuf[jj][val];
+  	     printf("%3d ",recvbuf[jj].speeds[val]);
+         gridfinal[k*NX +jj].speeds[val]  = recvbuf[jj].speeds[val];
+         grid[k*NX +jj].speeds[val] = recvbuf[jj].speeds[val];
         }
     	}
       printf("\n");
