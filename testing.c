@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     }
     printf("\n");
   }
-  printf("\n")
+  printf("\n");
 
 
   MPI_Init( &argc, &argv );
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]){
   else {
     for (ii = 0; ii<local_ncols;ii++){
       for(int val = 0; val < 9; val++ ){
-        sendbuf[ii].speeds[val] = temp1[ NX +ii ].speeds[val]
+        sendbuf[ii].speeds[val] = temp1[ NX +ii ].speeds[val];
       }
     }
     MPI_Send(sendbuf,local_ncols,tspeed,0,tag,MPI_COMM_WORLD);
