@@ -39,11 +39,11 @@ int main(int argc, char* argv[]){
   MPI_Datatype tspeed;
   MPI_Status status;
 
-  grid= (int*)malloc(sizeof(int) * NX * NY);
+  grid= (t_speed*)malloc(sizeof(t_speed) * NX * NY);
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
       for(int val = 0; val < 9; val++ ){
-        grid[ii*NX +jj][val] = ii;
+        grid[ii*NX +jj].speeds[val] = ii;
       }
     }
   }
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[jj][val] = recvbuf[jj].speeds[val] ;
+      temp1[jj].speeds[val] = recvbuf[jj].speeds[val] ;
     }
   }
 
@@ -123,8 +123,8 @@ int main(int argc, char* argv[]){
     for(jj =0; jj<local_ncols; jj++){
       for(int val = 0; val < 9; val++ ){
         printf("%3d ",temp1[NX +jj].speeds[val]);
-        gridfinal[jj][val] = temp1[NX +jj].speeds[val];
-        grid[jj][val] = temp1[NX +jj].speeds[val];
+        gridfinal[jj].speeds[val]  = temp1[NX +jj].speeds[val];
+        grid[jj].speeds[val] = temp1[NX +jj].speeds[val];
       }
     }
     printf("\n");
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]){
   else {
     for (ii = 0; ii<local_ncols;ii++){
       for(int val = 0; val < 9; val++ ){
-        sendbuf[ii][val] = temp1[ NX +ii ][val];
+        sendbuf[ii].speeds[val] = temp1[ NX +ii ].speeds[val]
       }
     }
     MPI_Send(sendbuf,local_ncols,tspeed,0,tag,MPI_COMM_WORLD);
