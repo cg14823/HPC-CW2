@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
 
     for (jj = 0; jj < local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows +1)*params.nx +jj].speeds[val] = recvgrid[jj*params.nx +val]];
+        partial_cells[(local_nrows +1)*params.nx +jj].speeds[val] = recvgrid[jj*params.nx +val];
       }
     }
 
