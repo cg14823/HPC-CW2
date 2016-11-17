@@ -1,6 +1,6 @@
 # Makefile
 
-EXE=d2q9-bgk
+EXE=testing
 
 CC=mpicc
 CFLAGS= -std=c99 -O3 -fp-model fast=2
