@@ -39,14 +39,18 @@ int main(int argc, char* argv[]){
   MPI_Datatype tspeed;
   MPI_Status status;
 
+  printf("Original Grid\n");
   grid= (t_speed*)malloc(sizeof(t_speed) * NX * NY);
   for (ii = 0; ii < NX; ii++){
     for(jj = 0; jj <NY; jj++){
       for(int val = 0; val < 9; val++ ){
         grid[ii*NX +jj].speeds[val] = ii;
+        printf("%3d ",ii);
       }
     }
+    printf("\n");
   }
+  printf("\n")
 
 
   MPI_Init( &argc, &argv );
@@ -144,7 +148,7 @@ int main(int argc, char* argv[]){
   else {
     for (ii = 0; ii<local_ncols;ii++){
       for(int val = 0; val < 9; val++ ){
-        sendbuf[ii].speeds[val] = temp1[ NX +ii ].speeds[val];
+        sendbuf[ii].speeds[val] = temp1[ NX +ii ].speeds[val]
       }
     }
     MPI_Send(sendbuf,local_ncols,tspeed,0,tag,MPI_COMM_WORLD);
