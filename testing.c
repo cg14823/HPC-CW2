@@ -60,7 +60,18 @@ int main(int argc, char* argv[]){
 
   local_ncols = NCOLS;
   local_nrows = 1;
-
+  if (rank == 0){
+    printf("ORIGINAL GIRD");
+    for (ii = 0; ii < NX; ii++){
+      for(jj = 0; jj <NY; jj++){
+        for(int val = 0; val < 9; val++ ){
+          printf("%d ",grid[ii*NX +jj].speeds[val]);
+        }
+      }
+      printf("\n");
+    }
+    printf("\n");
+  }
 
   // allocate space for send and recv buffer
   sendbuf = (double*)malloc(sizeof(double) * local_ncols*9);
@@ -72,9 +83,7 @@ int main(int argc, char* argv[]){
   // devide grid between 4 threads
   for(ii=0;ii<local_nrows;ii++) {
     for(jj=0;jj<local_ncols;jj++) {
-      for(int val = 0; val < 9; val++ ){
-          temp1[(ii+1) * NX +jj].speeds[val] = grid[(ii+rank) * NX +jj].speeds[val];
-      }
+        temp1[(ii+1) * NX +jj] = grid[(ii+rank) * NX +jj];
     }
   }
 
@@ -93,7 +102,7 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[(local_nrows +1)*NX +jj].speeds[val] = recvbuf[local_ncols* jj +val];
+      temp1[(local_nrows +1)*NX +jj].speeds[val] = recvbuf[local_ncols * jj +val];
     }
   }
 
@@ -113,17 +122,17 @@ int main(int argc, char* argv[]){
 
   for (jj = 0; jj <local_ncols;jj++){
     for(int val = 0; val < 9; val++ ){
-      temp1[NX +jj].speeds[val]  = temp1[NX +jj].speeds[val]  + temp1[jj].speeds[val] +temp1[NX*2 +jj].speeds[val] ;
+      temp1[NX +jj].speeds[val]  += temp1[jj].speeds[val] +temp1[NX*2 +jj].speeds[val] ;
     }
   }
 
   // join grid again
   if (rank == 0){
     for(jj =0; jj<local_ncols; jj++){
+      gridfinal[jj] = temp1[NX +jj];
+      grid[jj]= temp1[NX +jj];
       for(int val = 0; val < 9; val++ ){
         printf("%3d ",temp1[NX +jj].speeds[val]);
-        gridfinal[jj].speeds[val]  = temp1[NX +jj].speeds[val];
-        grid[jj].speeds[val] = temp1[NX +jj].speeds[val];
       }
     }
     printf("\n");
@@ -154,6 +163,5 @@ int main(int argc, char* argv[]){
   free(sendbuf);
   free(recvbuf);
   free(temp1);
-
 
 }
