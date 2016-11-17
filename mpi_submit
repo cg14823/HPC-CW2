@@ -4,8 +4,8 @@
 #!
 #! Name of job
 
-#PBS -N testing
-#PBS -o testing.out
+#PBS -N d2q9-bgk
+#PBS -o d2q9-bgk.out
 #PBS -q teaching
 
 #! Number of nodes (in this case 1 node with 4 CPU cores)
@@ -13,13 +13,13 @@
 #! Second entry: Total amount of wall-clock time (true, elapsed time).
 #! 00:05:00 indicates 05 minutes.
 
-#PBS -l nodes=1:ppn=4,walltime=00:05:00
+#PBS -l nodes=4:ppn=16,walltime=00:05:00
 
 #! Mail to user if job aborts
 #PBS -m a
 
 #! application name
-application="./testing"
+application="./d2q9-bgk"
 
 #! Run options for the application
 options="input_128x128.params obstacles_128x128.dat"

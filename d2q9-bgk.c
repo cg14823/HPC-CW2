@@ -155,6 +155,7 @@ int main(int argc, char* argv[])
   int left;
   int right;
   int size;
+  int val;
   int local;
   int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
   int local_ncols = params.nx;      // devide the grid by rows
@@ -162,14 +163,12 @@ int main(int argc, char* argv[])
   MPI_Status status;
 
   double local_density = 0.0;
-  t_speed *sendgrid;
-  t_speed *recvgrid;
+  double *sendgrid;
+  double *recvgrid;
   t_speed *partial_cells;
   t_speed *partial_temp_cells;
   int tag = 0; /* scope for adding extra information to a message */
   /* iterate for maxIters timesteps */
-  gettimeofday(&timstr, NULL);
-  tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 
   MPI_Init( &argc, &argv );
   MPI_Comm_size( MPI_COMM_WORLD, &size );
@@ -180,8 +179,8 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (rank + size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  sendgrid = (t_speed*)malloc(sizeof(t_speed*) * local_ncols);
-  recvgrid = (t_speed*)malloc(sizeof(t_speed*) * local_ncols);
+  sendgrid = (double*)malloc(sizeof(double*) * local_ncols * NSPEEDS);
+  recvgrid = (double*)malloc(sizeof(double*) * local_ncols * NSPEEDS);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
@@ -191,6 +190,11 @@ int main(int argc, char* argv[])
       partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)+jj];
       partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
     }
+  }
+
+  if (rank == MASTER){
+    gettimeofday(&timstr, NULL);
+    tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
@@ -226,30 +230,37 @@ int main(int argc, char* argv[])
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     // copy data to be send left 1st row
     for (ii = 0; ii<local_ncols;ii++){
-      sendgrid[ii] = partial_cells[params.nx + ii];
+      for(val = 0; val<NSPEEDS; val++){
+        sendgrid[ii*params.nx +val] = partial_cells[params.nx + ii].speeds[val];
+      }
     }
     // send data left and receive right
-    MPI_Sendrecv(sendgrid,local_ncols,MPI_DOUBLE,left,tag,
-                recvgrid,local_ncols,MPI_DOUBLE,right,tag,
+    MPI_Sendrecv(sendgrid,local_ncols*NSPEEDS,MPI_DOUBLE,left,tag,
+                recvgrid,local_ncols*NSPEEDS,MPI_DOUBLE,right,tag,
                 MPI_COMM_WORLD,&status);
 
     for (jj = 0; jj < local_ncols;jj++){
-      partial_cells[(local_nrows +1)*params.nx +jj] = recvgrid[jj];
-
+      for(val = 0; val<NSPEEDS; val++){
+        partial_cells[(local_nrows +1)*params.nx +jj].speeds[val] = recvgrid[jj*params.nx +val]];
+      }
     }
 
     // copy data to send right last row
     for (ii = 0; ii<local_ncols;ii++){
-      sendgrid[ii] = partial_cells[local_nrows * params.nx + ii];
+      for(val = 0; val<NSPEEDS; val++){
+        sendgrid[ii*params.nx +val] = partial_cells[local_nrows * params.nx + ii].speeds[val];
+      }
     }
 
     // send data right and receive left
-    MPI_Sendrecv(sendgrid,local_ncols,MPI_DOUBLE,right,tag,
-                recvgrid,local_ncols,MPI_DOUBLE,left,tag,
+    MPI_Sendrecv(sendgrid,local_ncols*NSPEEDS,MPI_DOUBLE,right,tag,
+                recvgrid,local_ncols*NSPEEDS,MPI_DOUBLE,left,tag,
                 MPI_COMM_WORLD,&status);
 
     for (jj = 0; jj < local_ncols;jj++){
-      partial_cells[jj] = recvgrid[jj];
+      for(val = 0; val<NSPEEDS; val++){
+        partial_cells[jj].speeds[val] = recvgrid[jj*params.nx+val];
+      }
     }
     // !!!!------------------------------------HALO EXCHANGE END--------------------------------------------------------!!!!
     // ------------------------------------------- START PROPAGATE
@@ -363,7 +374,7 @@ int main(int argc, char* argv[])
 
     // START av_velocity
 
-    int    tot_cells = 0;  /* no. of cells used in calculation */
+    float    tot_cells = 0.0;  /* no. of cells used in calculation */
     double tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
 
     /* initialise */
@@ -421,20 +432,21 @@ int main(int argc, char* argv[])
     printf("tot density: %.12E\n", total_density(params, cells));
 #endif
   }
-
+  if(rank == MASTER){
+    gettimeofday(&timstr, NULL);
+    toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+    getrusage(RUSAGE_SELF, &ru);
+    timstr = ru.ru_utime;
+    usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+    timstr = ru.ru_stime;
+    systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+  }
   MPI_Finalize();
   free(sendgrid);
   free(recvgrid);
   free(partial_temp_cells);
   free(partial_cells);
 
-  gettimeofday(&timstr, NULL);
-  toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-  getrusage(RUSAGE_SELF, &ru);
-  timstr = ru.ru_utime;
-  usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-  timstr = ru.ru_stime;
-  systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 
   /* write final values and free memory */
   printf("==done==\n");
