@@ -451,7 +451,7 @@ int main(int argc, char* argv[])
     }
     finalRecv = (double*)malloc(sizeof(double*)*local_ncols*NSPEEDS *local_nrows);
     for (int k = 1; k < size; k++){
-      MPI_Recv(finalRecv,*local_ncols*NSPEEDS *local_nrows, MPI_DOUBLE,MASTER,k,tag,MPI_COMM_WORLD,&status);
+      MPI_Recv(finalRecv,local_ncols*NSPEEDS *local_nrows, MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
 
       for (ii = 0; ii< local_nrows;ii++){
         for(jj = 0; jj<local_ncols;jj++){
