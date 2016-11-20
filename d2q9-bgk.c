@@ -167,6 +167,8 @@ int main(int argc, char* argv[])
   double *recvgrid;
   t_speed *partial_cells;
   t_speed *partial_temp_cells;
+  double finalRecv;
+  double finalSend;
   int tag = 0; /* scope for adding extra information to a message */
   /* iterate for maxIters timesteps */
 
@@ -440,22 +442,50 @@ int main(int argc, char* argv[])
     usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+
+    // re-unite grid
+    for (ii = 1; ii<local_nrows;ii++){
+      for (jj = 0 ; jj<local_ncols; jj++){
+        cells[ii* local_ncols + jj] = partial_cells[ii* local_ncols + jj];
+      }
+    }
+    finalRecv = (double*)malloc(sizeof(double*)*local_ncols*NSPEEDS *local_nrows);
+    for (int k = 1; k < size; k++){
+      MPI_Recv(finalRecv,*local_ncols*NSPEEDS *local_nrows, MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
+
+      for (ii = 0; ii< local_nrows;ii++){
+        for(jj = 0; jj<local_ncols;jj++){
+          for(val = 0; val < NSPEEDS; val++){
+            cells[ii+rank*local_nrows+jj].speeds[val] = finalRecv[ii+rank*local_nrows+jj+val];
+          }
+        }
+      }
+    }
+    /* write final values and free memory */
+    printf("==done==\n");
+    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+    write_values(params, cells, obstacles, av_vels);
+    finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
+  }
+  else{
+    free(sendgrid);
+    free(recvgrid);
+    finalSend = (double*)malloc(sizeof(double*)*local_ncols*NSPEEDS *local_nrows);
+    for (ii = 0; ii<local_nrows;ii++){
+      for (jj = 0 ; jj<local_ncols; jj++){
+        for (val = 0; val< NSPEEDS;val++){
+          finalSend[ii*local_ncols +jj +val] = partial_cells[(ii+1)*local_ncols+jj].speeds[val];
+        }
+      }
+    }
+    MPI_Send(finalSend,local_ncols*NSPEEDS*local_nrows,MPI_DOUBLE,MASTER,tag,MPI_COMM_WORLD);
   }
   MPI_Finalize();
-  free(sendgrid);
-  free(recvgrid);
   free(partial_temp_cells);
   free(partial_cells);
-
-
-  /* write final values and free memory */
-  printf("==done==\n");
-  printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
-  printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
-  printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-  printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
-  write_values(params, cells, obstacles, av_vels);
-  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
 
   return EXIT_SUCCESS;
 }
