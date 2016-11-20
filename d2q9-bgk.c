@@ -185,12 +185,12 @@ int main(int argc, char* argv[])
   recvgrid = (double*)malloc(sizeof(double*) * local_ncols * NSPEEDS);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
-  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
+  //partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
 
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
-      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)+jj];
-      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
+      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)* params.nx +jj];
+      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)* params.nx +jj];
     }
   }
 
@@ -280,15 +280,15 @@ int main(int argc, char* argv[])
         /* propagate densities to neighbouring cells, following
         ** appropriate directions of travel and writing into
         ** scratch space grid */
-        partial_temp_cells[ii * params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
-        partial_temp_cells[ii * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
-        partial_temp_cells[ii * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
-        partial_temp_cells[ii * params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
-        partial_temp_cells[ii * params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
-        partial_temp_cells[ii * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
-        partial_temp_cells[ii * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
-        partial_temp_cells[ii * params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
-        partial_temp_cells[ii * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+        temp_cells[(ii-1)+rank * params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        temp_cells[ii * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+        temp_cells[ii * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
+        temp_cells[ii * params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+        temp_cells[ii * params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
+        temp_cells[ii * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+        temp_cells[ii * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+        temp_cells[ii * params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+        temp_cells[ii * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
       }
     }
     //============================================= START collisionrebound
@@ -446,7 +446,7 @@ int main(int argc, char* argv[])
     // re-unite grid
     for (ii = 1; ii<local_nrows;ii++){
       for (jj = 0 ; jj<local_ncols; jj++){
-        cells[ii* local_ncols + jj] = partial_cells[ii* local_ncols + jj];
+        cells[(ii-1)* local_ncols + jj] = partial_cells[ii* local_ncols + jj];
       }
     }
     finalRecv = (double*)malloc(sizeof(double*)*local_ncols*NSPEEDS *local_nrows);
@@ -456,7 +456,7 @@ int main(int argc, char* argv[])
       for (ii = 0; ii< local_nrows;ii++){
         for(jj = 0; jj<local_ncols;jj++){
           for(val = 0; val < NSPEEDS; val++){
-            cells[ii+k*local_nrows+jj].speeds[val] = finalRecv[(ii*local_ncols +jj)*local_ncols +val];
+            cells[(ii+k*local_nrows)*local_ncols+jj].speeds[val] = finalRecv[(ii*local_ncols +jj)*local_ncols +val];
           }
         }
       }
