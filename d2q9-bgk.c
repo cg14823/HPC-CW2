@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
             local_density += partial_temp_cells[cellAccess].speeds[kk];
           }
           /* compute x velocity component */
-          floatfloat u_x = (partial_temp_cells[cellAccess].speeds[1]
+          float u_x = (partial_temp_cells[cellAccess].speeds[1]
                         + partial_temp_cells[cellAccess].speeds[5]
                         + partial_temp_cells[cellAccess].speeds[8]
                         - (partial_temp_cells[cellAccess].speeds[3]
