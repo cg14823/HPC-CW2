@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
       {
         int cellAccess = ii * params.nx + jj;
         /* don't consider occupied cells */
-        if (!obstacles[(ii-1)*rank *local_nrows + jj])
+        if (!obstacles[(ii-1+rank*local_nrows)* params.nx +jj])
         {
 
           /* compute local density total */
@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
       for (int jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
-        if (!obstacles[(ii-1)*rank *local_nrows + jj])
+        if (!obstacles[(ii-1+rank*local_nrows)* params.nx +jj])
         {
           int cellAccess = ii * params.nx + jj;
           /* local density total */
