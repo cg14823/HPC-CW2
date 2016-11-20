@@ -231,9 +231,9 @@ int main(int argc, char* argv[])
     }
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     // copy data to be send left 1st row
-    for (ii = 0; ii<local_ncols;ii++){
+    for (jj = 0; jj<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        sendgrid[ii*params.nx +val] = partial_cells[params.nx + ii].speeds[val];
+        sendgrid[jj*local_ncols+val] = partial_cells[params.nx + ii].speeds[val];
       }
     }
     // send data left and receive right
@@ -456,7 +456,7 @@ int main(int argc, char* argv[])
       for (ii = 0; ii< local_nrows;ii++){
         for(jj = 0; jj<local_ncols;jj++){
           for(val = 0; val < NSPEEDS; val++){
-            cells[ii+rank*local_nrows+jj].speeds[val] = finalRecv[ii+rank*local_nrows+jj+val];
+            cells[ii+k*local_nrows+jj].speeds[val] = finalRecv[(ii*local_ncols +jj)*local_ncols +val];
           }
         }
       }
@@ -477,7 +477,7 @@ int main(int argc, char* argv[])
     for (ii = 0; ii<local_nrows;ii++){
       for (jj = 0 ; jj<local_ncols; jj++){
         for (val = 0; val< NSPEEDS;val++){
-          finalSend[ii*local_ncols +jj +val] = partial_cells[(ii+1)*local_ncols+jj].speeds[val];
+          finalSend[(ii*local_ncols +jj)*local_ncols +val] = partial_cells[(ii+1)*local_ncols+jj].speeds[val];
         }
       }
     }
