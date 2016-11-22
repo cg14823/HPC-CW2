@@ -197,6 +197,7 @@ int main(int argc, char* argv[])
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+    printf("grid devided!\n");
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
@@ -236,6 +237,7 @@ int main(int argc, char* argv[])
         partial_cells[jj].speeds[val] = recvgrid[jj*NSPEEDS +val];
       }
     }
+    if (rank == MASTER) printf("HALO EXCHANGE DONE!\n");
     // !!!!------------------------------------HALO EXCHANGE END--------------------------------------------------------!!!!
 
     //                   <<<<<<  START ACCELERATE_FLOW >>>>>>>>>>
@@ -265,6 +267,8 @@ int main(int argc, char* argv[])
           partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
         }
       }
+
+      prinf("accelerate_flow done!\n");
     }
 
     // ------------------------------------------- START PROPAGATE
