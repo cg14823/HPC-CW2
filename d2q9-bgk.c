@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
         sendgrid[i] = partial_cells[params.nx + ii].speeds[val];
         i++;
       }
+      printf("row copied\n");
     }
     if (rank == MASTER) printf("copied data to send left!\n");
     // send data left and receive right
@@ -393,7 +394,7 @@ int main(int argc, char* argv[])
 
     // START av_velocity
 
-    float    tot_cells = 0.0;  /* no. of cells used in calculation */
+    double    tot_cells = 0.0;  /* no. of cells used in calculation */
     double tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
 
     /* initialise */
@@ -438,7 +439,7 @@ int main(int argc, char* argv[])
     double globaltot_u;
     double globaltotcells;
     MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_FLOAT, MPI_SUM,0, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
 
     if (rank == MASTER){
       av_vels[tt] = globaltot_u/globaltotcells;
