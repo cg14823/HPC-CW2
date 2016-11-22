@@ -1,3 +1,4 @@
+
 /*
 ** Code to implement a d2q9-bgk lattice boltzmann scheme.
 ** 'd2' inidates a 2-dimensional grid, and
@@ -30,6 +31,7 @@
 ** Grid indicies are:
 **
 **          ny
+
 **          ^       cols(jj)
 **          |  ----- ----- -----
 **          | | ... | ... | etc |
@@ -260,14 +262,12 @@ int main(int argc, char* argv[])
       float globaltot_u = tot_u;
       float globaltotcells= (float)tot_cells;
       for (int k =1; k<size; k++){
-        printf("receiving from %d \n",k);
         MPI_Recv(&stuffs,2,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
         globaltot_u += stuffs[0];
         globaltotcells += stuffs[1];
       }
 
       av_vels[tt] = globaltot_u/globaltotcells;
-      printf("AV VELOCITY DONE!\n");
     }
     else{
       float stuffs[] = {tot_u,(float) tot_cells};
@@ -295,8 +295,9 @@ int main(int argc, char* argv[])
         cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
       }
     }
-    recvbufFINAL  = (float*)malloc(sizeof(float) * local_ncols*local_nrows*NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
     for (int k = 1; k < size; k++){
+
       MPI_Recv(recvbufFINAL,local_ncols*local_nrows*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
       i =0;
       for (ii =0; ii<local_nrows;ii++){
