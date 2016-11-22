@@ -165,8 +165,8 @@ int main(int argc, char* argv[])
   double local_density = 0.0;
   double *sendgrid;
   double *recvgrid;
-  double *sendgridFINAL;
-  double *recvgridFINAL;
+  double *sendbufFINAL;
+  double *recvbufFINAL;
   t_speed *partial_cells;
   t_speed *partial_temp_cells;
   int tag = 0; /* scope for adding extra information to a message */
@@ -449,8 +449,8 @@ int main(int argc, char* argv[])
     free(recvgrid);
 
     // join grid
-    for (i =1 ; i<local_nrows;i++){
-      for (j= 0;j < local_ncols;j++){
+    for (ii =1 ; ii<local_nrows;ii++){
+      for (jj= 0;jj < local_ncols;jj++){
         cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
       }
     }
