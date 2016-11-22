@@ -434,15 +434,23 @@ int main(int argc, char* argv[])
         }
       }
     }
-    double globaltot_u;
-    int globaltotcells;
-    if (rank == MASTER) printf("before REDUCE\n");
-    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
-    if (rank == MASTER) printf("after reduce\n");
+
     if (rank == MASTER){
-      av_vels[tt] = globaltot_u/(double)globaltotcells;
+      double stuffs[2];
+      double globaltot_u = tot_u;
+      double globaltotcells= (double)tot_cells;
+      for (int k =1; k<size; k++){
+        MPI_Recv(&stuffs,2,k,tag,MPI_COMM_WORLD,&status);
+        globaltot_u += stuffs[0];
+        globaltotcells += stuffs[1];
+      }
+
+      av_vels[tt] = globaltot_u/globaltotcells;
       printf("AV VELOCITY DONE!\n");
+    }
+    else{
+      double stuffs[] = {tot_u,(double) tot_cells};
+      MPI_Send(&stuffs,2,MPI_DOUBLE,MASTER,tag,MPI_COMM_WORLD);
     }
     // END AV_VELOCITY
   }
