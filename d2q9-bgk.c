@@ -348,6 +348,8 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
 
 int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right){
   // copy data to be send left 1st row
+  MPI_Status status;
+  int tag =0;
   int i =0;
   for (int jj = 0; jj<local_ncols;jj++){
     for(int val = 0; val<NSPEEDS; val++){
