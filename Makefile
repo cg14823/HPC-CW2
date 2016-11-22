@@ -3,7 +3,7 @@
 EXE=d2q9-bgk
 
 CC=mpicc
-CFLAGS= -std=c99 -O3 -fp-model fast=2
+CFLAGS= -std=c99 -O3 -ffast-math
 LIBS = -lm
 
 FINAL_STATE_FILE=./final_state.dat
