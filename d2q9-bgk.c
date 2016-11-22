@@ -159,13 +159,11 @@ int main(int argc, char* argv[])
   int right;
   int size;
   int val;
-  int local;
   int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
   int local_ncols = params.nx;      // devide the grid by rows
 
   MPI_Status status;
 
-  float local_density = 0.0;
   float *sendgrid;
   float *recvgrid;
 
@@ -216,9 +214,12 @@ int main(int argc, char* argv[])
     if (rank==MASTER)printf("it : %d\n", tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
+    if (rank == MASTER) printf("post haloa\n");
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows);
+    if (rank == MASTER) printf("post propagate\n");
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
+    if (rank == MASTER) printf("post colission\n");
 
     // START av_velocity
 
@@ -270,10 +271,9 @@ int main(int argc, char* argv[])
     MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_FLOAT, MPI_SUM,0, MPI_COMM_WORLD);
     MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
 
-    if (rank == MASTER){
-      av_vels[tt] = globaltot_u/(double)globaltotcells;
-    }
+    if (rank == MASTER) av_vels[tt] = globaltot_u/(double)globaltotcells;
     // END AV_VELOCITY
+    if (rank == MASTER) printf("post av_vels\n");
   }
 
   if(rank == MASTER){
