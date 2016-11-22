@@ -436,9 +436,10 @@ int main(int argc, char* argv[])
     }
     double globaltot_u;
     double globaltotcells;
+    if (rank == MASTER) printf("before REDUCE\n");
     MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
     MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
-
+    if (rank == MASTER) printf("after reduce\n");
     if (rank == MASTER){
       av_vels[tt] = globaltot_u/globaltotcells;
       printf("AV VELOCITY DONE!\n");
