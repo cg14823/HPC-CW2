@@ -277,13 +277,13 @@ int main(int argc, char* argv[])
     if (rank == MASTER){
       float global[2]= {tot_u,(float)tot_cells};
       float recv[2];
-      prinf("retrieving data\n");
+      printf("retrieving data\n");
       for (int k =1; k< size;k++){
         MPI_Recv(&recv,2,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
         global[0] += recv[0];
         global[1] += recv[1];
       }
-      prinf("saving\n");
+      printf("saving\n");
       av_vels[tt] = global[0]/global[1];
       printf("post av_vels\n");
 
