@@ -230,9 +230,11 @@ int main(int argc, char* argv[])
     /* loop over all non-blocked cells */
     for (ii = 1; ii < local_nrows; ii++)
     {
+      if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
+        if (((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj >= params.nx * params.ny) printf("FUUUUUUUUUUUUUUUUUUCK\n");
         if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
         {
           int cellAccess = ii * params.nx + jj;
@@ -268,8 +270,8 @@ int main(int argc, char* argv[])
 
     float globaltot_u;
     int globaltotcells;
-    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_FLOAT, MPI_SUM,0, MPI_COMM_WORLD);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,MASTER, MPI_COMM_WORLD);
 
     if (rank == MASTER) av_vels[tt] = globaltot_u/(double)globaltotcells;
     // END AV_VELOCITY
