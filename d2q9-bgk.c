@@ -211,15 +211,12 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    if (rank==MASTER)printf("it : %d\n", tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
+    if (rank == MASTER) printf("it %d\n",tt);
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
-    if (rank == MASTER) printf("post haloa\n");
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows);
-    if (rank == MASTER) printf("post propagate\n");
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
-    if (rank == MASTER) printf("post colission\n");
 
     // START av_velocity
 
@@ -230,7 +227,6 @@ int main(int argc, char* argv[])
     /* loop over all non-blocked cells */
     for (ii = 1; ii < local_nrows+1; ii++)
     {
-      if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
@@ -266,9 +262,7 @@ int main(int argc, char* argv[])
           tot_cells += 1;
         }
       }
-      if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
     }
-    if (rank == MASTER) printf("exit double loop\n",ii,local_nrows);
     /*float vars [2] = {tot_u,(float)tot_cells};
     float global[2]= {0,0};
     if (rank == MASTER) printf("post  intialize vars\n",ii,local_nrows);
@@ -277,15 +271,12 @@ int main(int argc, char* argv[])
     if (rank == MASTER){
       float global[2]= {tot_u,(float)tot_cells};
       float recv[2];
-      printf("retrieving data\n");
       for (int k =1; k< size;k++){
         MPI_Recv(&recv,2,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
         global[0] += recv[0];
         global[1] += recv[1];
       }
-      printf("saving\n");
       av_vels[tt] = global[0]/global[1];
-      printf("post av_vels\n");
 
     }
     else{
@@ -295,7 +286,7 @@ int main(int argc, char* argv[])
   }
 
   if(rank == MASTER){
-    printf("after loop");
+    printf("after loop\n");
     gettimeofday(&timstr, NULL);
     toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     getrusage(RUSAGE_SELF, &ru);
@@ -342,9 +333,9 @@ int main(int argc, char* argv[])
     printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
     printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
     write_values(params, cells, obstacles, av_vels);
-    finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
   }
   else{
+    printf("RANKS OUTISED\n");
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
@@ -370,6 +361,7 @@ int main(int argc, char* argv[])
   MPI_Finalize();
   free(partial_temp_cells);
   free(partial_cells);
+  finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
 
   return EXIT_SUCCESS;
 }
