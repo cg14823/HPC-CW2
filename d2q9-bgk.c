@@ -241,9 +241,11 @@ int main(int argc, char* argv[])
                 recvgrid,local_ncols*NSPEEDS,MPI_DOUBLE,left,tag,
                 MPI_COMM_WORLD,&status);
 
+    i =0;
     for (jj = 0; jj < local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        partial_cells[jj].speeds[val] = recvgrid[jj*NSPEEDS +val];
+        partial_cells[jj].speeds[val] = recvgrid[i];
+        i++;
       }
     }
     if (rank == MASTER) printf("HALO EXCHANGE DONE!\n");
@@ -508,9 +510,6 @@ int main(int argc, char* argv[])
   MPI_Finalize();
   free(partial_temp_cells);
   free(partial_cells);
-
-
-
 
   return EXIT_SUCCESS;
 }
