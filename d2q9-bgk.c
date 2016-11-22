@@ -461,7 +461,7 @@ int main(int argc, char* argv[])
       for (ii =0; ii<local_nrows;ii++){
         for (jj =0; jj<local_ncols;jj++){
           for(val =0;val<NSPEEDS;val++){
-            cells[ii+rank*params.nx +jj].speeds[val]= recvbufFinal[i];
+            cells[ii+rank*params.nx +jj].speeds[val]= recvbufFINAL[i];
             i++;
           }
         }
