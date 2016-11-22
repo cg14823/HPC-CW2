@@ -440,7 +440,7 @@ int main(int argc, char* argv[])
       double globaltot_u = tot_u;
       double globaltotcells= (double)tot_cells;
       for (int k =1; k<size; k++){
-        MPI_Recv(&stuffs,2,k,tag,MPI_COMM_WORLD,&status);
+        MPI_Recv(&stuffs,2,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
         globaltot_u += stuffs[0];
         globaltotcells += stuffs[1];
       }
