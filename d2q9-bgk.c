@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
     int i =0;
     for (jj = 0; ii<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
+        printf("HERE\n");
         sendgrid[i] = partial_cells[params.nx + jj].speeds[val];
         i++;
       }
