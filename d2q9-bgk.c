@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
-        if (!obstacles[(ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
+        if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
         {
           int cellAccess = ii * params.nx + jj;
           /* local density total */
