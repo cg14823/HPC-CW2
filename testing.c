@@ -28,6 +28,8 @@ int main(int argc, char* argv[]){
 
   double *sendbuf;       /* buffer to hold values to send */
   double *recvbuf;       /* buffer to hold received values */
+  double *sendbufFINAL;       /* buffer to hold values to send */
+  double *recvbufFINAL;       /* buffer to hold received values */
   t_speed *gridfinal;      /* buffer to hold values for printing */
 
   int tag = 0; /* scope for adding extra information to a message */
