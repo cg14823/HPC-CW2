@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
   float *sendgrid;
   float *recvgrid;
   t_speed *partial_cells;
-  t_speed *partial_temp_cells;
+  //t_speed *partial_temp_cells;
   float *finalRecv;
   float *finalSend;
   int tag = 0; /* scope for adding extra information to a message */
@@ -185,12 +185,12 @@ int main(int argc, char* argv[])
   recvgrid = (float*)malloc(sizeof(float*) * local_ncols * NSPEEDS);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
-  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
+  //partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
 
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
       partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)* params.nx +jj];
-      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)* params.nx +jj];
+      //partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)* params.nx +jj];
     }
   }
 
@@ -201,34 +201,7 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    //                   <<<<<<  START ACCELERATE_FLOW >>>>>>>>>>
-    if (rank == size - 1){
-      float aw1 = params.density * params.accel / 9.0;
-      float aw2 = params.density * params.accel / 36.0;
 
-      /* modify the 2nd row of the grid */
-      ii = local_nrows - 1;
-
-      for (jj = 0; jj < params.nx; jj++)
-      {
-        /* if the cell is not occupied and
-        ** we don't send a negative density */
-        if (!obstacles[(params.ny -2)* params.nx + jj]
-            && (partial_cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0
-            && (partial_cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0
-            && (partial_cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0)
-        {
-          /* increase 'east-side' densities */
-          partial_cells[ii * params.nx + jj].speeds[1] += aw1;
-          partial_cells[ii * params.nx + jj].speeds[5] += aw2;
-          partial_cells[ii * params.nx + jj].speeds[8] += aw2;
-          /* decrease 'west-side' densities */
-          partial_cells[ii * params.nx + jj].speeds[3] -= aw1;
-          partial_cells[ii * params.nx + jj].speeds[6] -= aw2;
-          partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
-        }
-      }
-    }
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     // copy data to be send left 1st row
     for (jj = 0; jj<local_ncols;jj++){
@@ -265,6 +238,36 @@ int main(int argc, char* argv[])
       }
     }
     // !!!!------------------------------------HALO EXCHANGE END--------------------------------------------------------!!!!
+
+
+    //                   <<<<<<  START ACCELERATE_FLOW >>>>>>>>>>
+    if (rank == size - 1){
+      float aw1 = params.density * params.accel / 9.0;
+      float aw2 = params.density * params.accel / 36.0;
+
+      /* modify the 2nd row of the grid */
+      ii = local_nrows - 1;
+
+      for (jj = 0; jj < params.nx; jj++)
+      {
+        /* if the cell is not occupied and
+        ** we don't send a negative density */
+        if (!obstacles[(params.ny -2)* params.nx + jj]
+            && (partial_cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0
+            && (partial_cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0
+            && (partial_cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0)
+        {
+          /* increase 'east-side' densities */
+          partial_cells[ii * params.nx + jj].speeds[1] += aw1;
+          partial_cells[ii * params.nx + jj].speeds[5] += aw2;
+          partial_cells[ii * params.nx + jj].speeds[8] += aw2;
+          /* decrease 'west-side' densities */
+          partial_cells[ii * params.nx + jj].speeds[3] -= aw1;
+          partial_cells[ii * params.nx + jj].speeds[6] -= aw2;
+          partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
+        }
+      }
+    }
     // ------------------------------------------- START PROPAGATE
     for (ii = 1; ii < local_nrows; ii++)
     {
@@ -280,7 +283,7 @@ int main(int argc, char* argv[])
         /* propagate densities to neighbouring cells, following
         ** appropriate directions of travel and writing into
         ** scratch space grid */
-        partial_temp_cells[(ii-1)+rank * params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        partial_temp_cells[ii * params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
         partial_temp_cells[ii * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
         partial_temp_cells[ii * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
         partial_temp_cells[ii * params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
