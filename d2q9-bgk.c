@@ -282,7 +282,7 @@ int main(int argc, char* argv[])
       float send [2] ={tot_u,(float)tot_cells};
       MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
     }
-    if (rank == MASTER) printf("it done  %d\n",tt);
+    //if (rank == MASTER) printf("it done  %d\n",tt);
     MPI_Barrier(MPI_COMM_WORLD);
   }
 
@@ -295,10 +295,11 @@ int main(int argc, char* argv[])
     usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-
+    printf("pre free\n");
     free(sendgrid);
     free(recvgrid);
 
+    printf("after free\n");
     // join grid
     for (ii =1 ; ii<local_nrows+1;ii++){
       for (jj= 0;jj < local_ncols;jj++){
@@ -307,6 +308,7 @@ int main(int argc, char* argv[])
     }
     recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
     for (int k = 1; k < size; k++){
+      pritf("start receving from %d\n",k);
       i =0;
       int x =0;
       MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
@@ -324,6 +326,7 @@ int main(int argc, char* argv[])
           }
         }
       }
+      pritf("end receving from %d\n",k);
     }
     free(recvbufFINAL);
 
@@ -336,7 +339,7 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    printf("RANKS OUTISED %d\n",rank);
+    //printf("RANKS OUTISED %d\n",rank);
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
