@@ -214,7 +214,6 @@ int main(int argc, char* argv[])
         i++;
       }
     }
-    if (rank == MASTER) printf("copied data to send left!\n");
     // send data left and receive right
     MPI_Sendrecv(sendgrid,local_ncols*NSPEEDS,MPI_DOUBLE,left,tag,
                 recvgrid,local_ncols*NSPEEDS,MPI_DOUBLE,right,tag,
@@ -279,8 +278,6 @@ int main(int argc, char* argv[])
           partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
         }
       }
-
-      printf("accelerate_flow done!\n");
     }
 
     // ------------------------------------------- START PROPAGATE
@@ -453,6 +450,7 @@ int main(int argc, char* argv[])
 #endif
   }
   if(rank == MASTER){
+    printf("after loop");
     gettimeofday(&timstr, NULL);
     toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     getrusage(RUSAGE_SELF, &ru);
