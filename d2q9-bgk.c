@@ -202,10 +202,12 @@ int main(int argc, char* argv[])
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+    printf("----- %d\n", params.maxIters);
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
+    printf("it : %d\n", tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
@@ -257,21 +259,13 @@ int main(int argc, char* argv[])
       }
     }
 
-    if (rank == MASTER){
-      float stuffs[2];
-      float globaltot_u = tot_u;
-      float globaltotcells= (float)tot_cells;
-      for (int k =1; k<size; k++){
-        MPI_Recv(&stuffs,2,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-        globaltot_u += stuffs[0];
-        globaltotcells += stuffs[1];
-      }
+    float globaltot_u;
+    int globaltotcells;
+    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_FLOAT, MPI_SUM,0, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
 
-      av_vels[tt] = globaltot_u/globaltotcells;
-    }
-    else{
-      float stuffs[] = {tot_u,(float) tot_cells};
-      MPI_Send(&stuffs,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+    if (rank == MASTER){
+      av_vels[tt] = globaltot_u/(double)globaltotcells;
     }
     // END AV_VELOCITY
   }
