@@ -269,15 +269,29 @@ int main(int argc, char* argv[])
       if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
     }
     if (rank == MASTER) printf("exit double loop\n",ii,local_nrows);
-    float vars [2] = {tot_u,(float)tot_cells};
+    /*float vars [2] = {tot_u,(float)tot_cells};
     float global[2]= {0,0};
     if (rank == MASTER) printf("post  intialize vars\n",ii,local_nrows);
     MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-    if (rank == MASTER) printf("reduce\n",ii,local_nrows);
+    if (rank == MASTER) printf("reduce\n",ii,local_nrows);*/
+    if (rank == MASTER){
+      float global[2]= {tot_u,(float)tot_cells};
+      float recv[2];
+      prinf("retrieving data\n");
+      for (int k =1; k< size;k++){
+        MPI_Recv(&recv,2,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
+        global[0] += recv[0];
+        global[1] += recv[1];
+      }
+      prinf("saving\n");
+      av_vels[tt] = global[0]/global[1];
+      printf("post av_vels\n");
 
-    if (rank == MASTER) av_vels[tt] = global[0]/global[1];
-    // END AV_VELOCITY
-    if (rank == MASTER) printf("post av_vels\n");
+    }
+    else{
+      float send [2] ={tot_u,(float)tot_cells};
+      MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+    }
   }
 
   if(rank == MASTER){
