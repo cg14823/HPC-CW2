@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
 
 
   // DEVIDE GRID DEFENETLY NOT BEST WAY
-  left = (rank == MASTER) ? (rank + size - 1) : (rank - 1);
+  left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
   sendgrid = (double*)malloc(sizeof(double*) * local_ncols * NSPEEDS);
