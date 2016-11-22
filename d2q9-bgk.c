@@ -209,10 +209,9 @@ int main(int argc, char* argv[])
     int i =0;
     for (jj = 0; ii<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        sendgrid[i] = partial_cells[params.nx + ii].speeds[val];
+        sendgrid[i] = partial_cells[params.nx + jj].speeds[val];
         i++;
       }
-      printf("row copied\n");
     }
     if (rank == MASTER) printf("copied data to send left!\n");
     // send data left and receive right
