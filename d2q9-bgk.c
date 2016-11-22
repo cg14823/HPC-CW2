@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
 
     /* initialise */
     /* loop over all non-blocked cells */
-    for (ii = 1; ii < local_nrows; ii++)
+    for (ii = 1; ii < local_nrows+1; ii++)
     {
       if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
       for (jj = 0; jj < params.nx; jj++)
@@ -334,7 +334,7 @@ int main(int argc, char* argv[])
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
     i =0;
     int x =0;
-    for(ii =1;ii<local_nrows;ii++){
+    for(ii =1;ii<local_nrows+1;ii++){
       for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[i] = partial_cells[ii*params.nx +jj].speeds[val];
@@ -448,7 +448,7 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
 
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows)
 {
-  for (int ii = 1; ii < local_nrows; ii++)
+  for (int ii = 1; ii < local_nrows+1; ii++)
   {
     int y_n = ii + 1;
     int y_s = ii - 1;
@@ -489,13 +489,13 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
 
-  for (ii = 1; ii < local_nrows; ii++)
+  for (ii = 1; ii < local_nrows+1; ii++)
   {
     for (jj = 0; jj < params.nx; jj++)
     {
       int cellAccess = ii * params.nx + jj;
       /* don't consider occupied cells */
-      if (!obstacles[(ii*params.nx)+(rank*local_nrows*params.nx)+jj])
+      if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
       {
 
         /* compute local density total */
