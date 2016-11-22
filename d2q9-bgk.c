@@ -212,7 +212,6 @@ int main(int argc, char* argv[])
   for (int tt = 0; tt < params.maxIters; tt++)
   {
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-    if (rank == MASTER) printf("it %d\n",tt);
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows);
@@ -283,6 +282,7 @@ int main(int argc, char* argv[])
       float send [2] ={tot_u,(float)tot_cells};
       MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
     }
+    if (rank == MASTER) printf("it done  %d\n",tt);
   }
 
   if(rank == MASTER){
