@@ -283,6 +283,7 @@ int main(int argc, char* argv[])
       MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
     }
     if (rank == MASTER) printf("it done  %d\n",tt);
+    MPI_Barrier(MPI_COMM_WORLD);
   }
 
   if(rank == MASTER){
