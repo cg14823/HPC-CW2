@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
     }
     recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
     for (int k = 1; k < size; k++){
-      pritf("start receving from %d\n",k);
+      printf("start receving from %d\n",k);
       i =0;
       int x =0;
       MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
           }
         }
       }
-      pritf("end receving from %d\n",k);
+      printf("end receving from %d\n",k);
     }
     free(recvbufFINAL);
 
