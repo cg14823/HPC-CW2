@@ -193,8 +193,6 @@ int main(int argc, char* argv[])
       partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
     }
   }
-
-  if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     printf("grid devided!\n");
@@ -277,6 +275,7 @@ int main(int argc, char* argv[])
           partial_cells[ii * params.nx + jj].speeds[7] -= aw2;
         }
       }
+      printf("Acelerate flow done\n");
     }
 
     // ------------------------------------------- START PROPAGATE
@@ -305,6 +304,7 @@ int main(int argc, char* argv[])
         partial_temp_cells[ii * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
       }
     }
+    if (rank == MASTER) printf("PROPAGATE DONE!\n");
     //============================================= START collisionrebound
 
     const double w0 = 4.0 / 9.0;  /* weighting factor */
@@ -386,6 +386,7 @@ int main(int argc, char* argv[])
         }
       }
     }
+    if (rank == MASTER) printf("COLLISION REBOUND DONE!\n");
     // END COLLISION REBOUND
 
     // START av_velocity
@@ -439,15 +440,11 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = globaltot_u/globaltotcells;
+      printf("AV VELOCITY DONE!\n");
     }
     // END AV_VELOCITY
-
-#ifdef DEBUG
-    printf("==timestep: %d==\n", tt);
-    printf("av velocity: %.12E\n", av_vels[tt]);
-    printf("tot density: %.12E\n", total_density(params, cells));
-#endif
   }
+
   if(rank == MASTER){
     printf("after loop");
     gettimeofday(&timstr, NULL);
