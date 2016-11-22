@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
   /* initialise our data structures and load values from file */
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels);
-  int ii, jj;
+  int ii, jj,i;
   int rank;
   int left;
   int right;
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER) printf("HALO EXCHANGE ENTERED!\n");
     // copy data to be send left 1st row
-    int i =0;
+    i =0;
     for (jj = 0; jj<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
         sendgrid[i] = partial_cells[params.nx + jj].speeds[val];
@@ -392,7 +392,7 @@ int main(int argc, char* argv[])
 
     // START av_velocity
 
-    double    tot_cells = 0.0;  /* no. of cells used in calculation */
+    int    tot_cells = 0;  /* no. of cells used in calculation */
     double tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
 
     /* initialise */
@@ -435,13 +435,13 @@ int main(int argc, char* argv[])
       }
     }
     double globaltot_u;
-    double globaltotcells;
+    int globaltotcells;
     if (rank == MASTER) printf("before REDUCE\n");
     MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_DOUBLE, MPI_SUM,0, MPI_COMM_WORLD);
+    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
     if (rank == MASTER) printf("after reduce\n");
     if (rank == MASTER){
-      av_vels[tt] = globaltot_u/globaltotcells;
+      av_vels[tt] = globaltot_u/(double)globaltotcells;
       printf("AV VELOCITY DONE!\n");
     }
     // END AV_VELOCITY
@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
     recvbufFINAL  = (double*)malloc(sizeof(double) * local_ncols*local_nrows*NSPEEDS);
     for (int k = 1; k < size; k++){
       MPI_Recv(recvbufFINAL,local_ncols*local_nrows*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
-      int i =0;
+      i =0;
       for (ii =0; ii<local_nrows;ii++){
         for (jj =0; jj<local_ncols;jj++){
           for(val =0;val<NSPEEDS;val++){
@@ -493,7 +493,7 @@ int main(int argc, char* argv[])
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (double*)malloc(sizeof(double) * local_ncols*local_nrows*NSPEEDS);
-    int i =0;
+    i =0;
     for(ii =1;ii<local_nrows;ii++){
       for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
