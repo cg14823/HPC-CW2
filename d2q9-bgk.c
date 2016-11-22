@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
     // !!!!------------------------------------HALO EXCHANGE END--------------------------------------------------------!!!!
 
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
-    propagate(params, partial_cells, partial_tmp_cells,local_nrows);
+    propagate(params, partial_cells, partial_temp_cells,local_nrows);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
 
     // START av_velocity
