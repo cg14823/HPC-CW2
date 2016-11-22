@@ -266,6 +266,7 @@ int main(int argc, char* argv[])
           tot_cells += 1;
         }
       }
+      if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
     }
 
     float globaltot_u;
@@ -292,7 +293,7 @@ int main(int argc, char* argv[])
     free(recvgrid);
 
     // join grid
-    for (ii =1 ; ii<local_nrows;ii++){
+    for (ii =1 ; ii<local_nrows+1;ii++){
       for (jj= 0;jj < local_ncols;jj++){
         cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
       }
