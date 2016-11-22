@@ -166,8 +166,10 @@ int main(int argc, char* argv[])
   double local_density = 0.0;
   double *sendgrid;
   double *recvgrid;
+
   double *sendbufFINAL;
   double *recvbufFINAL;
+
   t_speed *partial_cells;
   t_speed *partial_temp_cells;
   int tag = 0; /* scope for adding extra information to a message */
@@ -224,11 +226,11 @@ int main(int argc, char* argv[])
         {
           int cellAccess = ii * params.nx + jj;
           /* local density total */
-          local_density = 0.0;
+          double local_density = 0.0;
 
           for (int kk = 0; kk < NSPEEDS; kk++)
           {
-            local_density += partial_cells[cellAccess].speeds[kk];
+            double local_density += partial_cells[cellAccess].speeds[kk];
           }
 
           /* x-component of velocity */
