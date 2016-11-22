@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
         }
       }
 
-      prinf("accelerate_flow done!\n");
+      printf("accelerate_flow done!\n");
     }
 
     // ------------------------------------------- START PROPAGATE
