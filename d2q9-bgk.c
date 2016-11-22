@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    printf("RANKS OUTISED\n");
+    printf("RANKS OUTISED %d\n",rank);
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
@@ -382,7 +382,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
   for (int jj = 0; jj<local_ncols;jj++){
     for(int val = 0; val<NSPEEDS; val++){
-      sendgrid[i*4 +val] = partial_cells[params.nx + jj].speeds[val];
+      sendgrid[i*NSPEEDS +val] = partial_cells[params.nx + jj].speeds[val];
     }
     i++;
 
@@ -394,7 +394,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
       for (int x = 0; x < 4;x++){
         for(int val = 0; val<NSPEEDS; val++){
-          partial_cells[(local_nrows +1)*params.nx +jj -i+1 + x].speeds[val] = recvgrid[x*4 +val];
+          partial_cells[(local_nrows +1)*params.nx +jj -i+1 + x].speeds[val] = recvgrid[x*NSPEEDS +val];
         }
       }
       i =0;
@@ -404,7 +404,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
   i =0;
   for (int jj = 0; jj < local_ncols;jj++){
     for(int val = 0; val<NSPEEDS; val++){
-      sendgrid[i*4 +val] = partial_cells[local_nrows * params.nx + jj].speeds[val];
+      sendgrid[i*NSPEEDS +val] = partial_cells[local_nrows * params.nx + jj].speeds[val];
     }
     i++;
     if(i == 4){
@@ -415,7 +415,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
       for (int x = 0; x < 4;x++){
         for(int val = 0; val<NSPEEDS; val++){
-          partial_cells[jj -i+1 +x].speeds[val] = recvgrid[x*4 +val];
+          partial_cells[jj -i+1 +x].speeds[val] = recvgrid[x*NSPEEDS +val];
         }
       }
       i =0;
