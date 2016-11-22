@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
     MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
     if (rank == MASTER) printf("reduce\n",ii,local_nrows);
 
-    if (rank == MASTER) av_vels[tt] = globaltot_u/(double)globaltotcells;
+    if (rank == MASTER) av_vels[tt] = global[0]/global[1];
     // END AV_VELOCITY
     if (rank == MASTER) printf("post av_vels\n");
   }
