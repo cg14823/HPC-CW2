@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
 
           for (int kk = 0; kk < NSPEEDS; kk++)
           {
-            float local_density += partial_cells[cellAccess].speeds[kk];
+            local_density += partial_cells[cellAccess].speeds[kk];
           }
 
           /* x-component of velocity */
