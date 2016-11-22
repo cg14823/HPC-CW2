@@ -95,7 +95,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
-int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
+int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows);
 int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank);
 int write_values(const t_param params, t_speed* cells, int* obstacles, double* av_vels);
@@ -381,9 +381,9 @@ int main(int argc, char* argv[])
 
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
-  accelerate_flow(params, cells, obstacles);
-  propagate(params, cells, tmp_cells);
-  collisionrebound(params, cells, tmp_cells, obstacles);
+//  accelerate_flow(params, cells, obstacles);
+  //propagate(params, cells, tmp_cells);
+//collisionrebound(params, cells, tmp_cells, obstacles);
   return EXIT_SUCCESS;
 }
 
@@ -393,9 +393,9 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
   double aw2 = params.density * params.accel / 36.0;
 
   /* modify the 2nd row of the grid */
-  ii = local_nrows - 1;
+  int ii = local_nrows - 1;
 
-  for (jj = 0; jj < params.nx; jj++)
+  for (int jj = 0; jj < params.nx; jj++)
   {
     /* if the cell is not occupied and
     ** we don't send a negative density */
