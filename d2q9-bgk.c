@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
       partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
     }
   }
+  if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     printf("grid devided!\n");
