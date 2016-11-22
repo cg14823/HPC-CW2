@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
     if (rank == MASTER) printf("HALO EXCHANGE ENTERED!\n");
     // copy data to be send left 1st row
     int i =0;
-    for (jj = 0; ii<local_ncols;jj++){
+    for (jj = 0; jj<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
         printf("HERE\n");
         sendgrid[i] = partial_cells[params.nx + jj].speeds[val];
