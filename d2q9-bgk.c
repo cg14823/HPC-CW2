@@ -189,6 +189,9 @@ int main(int argc, char* argv[])
   partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
 
+  if(partial_cells == NULL) printf("%d cell nul\n",rank);
+  if(partial_temp_cells == NULL) printf("%d partial cell nul\n",rank);
+
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
       partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)+jj];
@@ -199,6 +202,9 @@ int main(int argc, char* argv[])
   sendgrid = (float*)malloc(sizeof(float*) * 4 * NSPEEDS);
   recvgrid = (float*)malloc(sizeof(float*) * 4 * NSPEEDS);
 
+  if(sendgrid == NULL) printf("%d send nul\n",rank);
+  if(recvgrid == NULL) printf("%d recv nul\n",rank);
+
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
@@ -207,7 +213,7 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    printf("it : %d\n", tt);
+    if (rank==MASTER)printf("it : %d\n", tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
