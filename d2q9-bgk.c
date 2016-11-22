@@ -203,6 +203,8 @@ int main(int argc, char* argv[])
   for (int tt = 0; tt < params.maxIters; tt++)
   {
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
+
+    if (rank == MASTER) printf("HALO EXCHANGE ENTERED!\n");
     // copy data to be send left 1st row
     for (jj = 0; ii<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
