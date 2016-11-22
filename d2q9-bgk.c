@@ -269,13 +269,11 @@ int main(int argc, char* argv[])
       if (rank == MASTER) printf("it %d of collition out of %d\n",ii,local_nrows);
     }
     if (rank == MASTER) printf("exit double loop\n",ii,local_nrows);
-    float globaltot_u;
-    int globaltotcells;
+    float vars [2] = {tot_u,(float)tot_cells};
+    float global[2]= {0,0};
     if (rank == MASTER) printf("post  intialize vars\n",ii,local_nrows);
-    MPI_Reduce(&tot_u, &globaltot_u, 1, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-    if (rank == MASTER) printf("reduce 1\n",ii,local_nrows);
-    MPI_Reduce(&tot_cells, &globaltotcells, 1, MPI_INT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-    if (rank == MASTER) printf("reduce2\n",ii,local_nrows);
+    MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
+    if (rank == MASTER) printf("reduce\n",ii,local_nrows);
 
     if (rank == MASTER) av_vels[tt] = globaltot_u/(double)globaltotcells;
     // END AV_VELOCITY
