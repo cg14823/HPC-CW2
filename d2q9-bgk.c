@@ -206,26 +206,33 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER) printf("HALO EXCHANGE ENTERED!\n");
     // copy data to be send left 1st row
+    int i =0;
     for (jj = 0; ii<local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        sendgrid[jj*NSPEEDS +val] = partial_cells[params.nx + ii].speeds[val];
+        sendgrid[i] = partial_cells[params.nx + ii].speeds[val];
+        i++;
       }
     }
+    if (rank == MASTER) printf("copied data to send left!\n");
     // send data left and receive right
     MPI_Sendrecv(sendgrid,local_ncols*NSPEEDS,MPI_DOUBLE,left,tag,
                 recvgrid,local_ncols*NSPEEDS,MPI_DOUBLE,right,tag,
                 MPI_COMM_WORLD,&status);
 
+    i =0;
     for (jj = 0; jj < local_ncols;jj++){
       for(val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows +1)*params.nx +jj].speeds[val] = recvgrid[jj*NSPEEDS +val] ;
+        partial_cells[(local_nrows +1)*params.nx +jj].speeds[val] = recvgrid[i];
+        i++;
       }
     }
 
     // copy data to send right last row
+    i=0;
     for (ii = 0; ii<local_ncols;ii++){
       for(val = 0; val<NSPEEDS; val++){
-        sendgrid[jj*NSPEEDS +val] = partial_cells[local_nrows * params.nx + ii].speeds[val];
+        sendgrid[i] = partial_cells[local_nrows * params.nx + ii].speeds[val];
+        i++;
       }
     }
 
