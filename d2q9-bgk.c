@@ -434,7 +434,7 @@ int main(int argc, char* argv[])
         }
       }
     }
-
+    printf("AV VELOCITY STARTED %d!\n",rank);
     if (rank == MASTER){
       double stuffs[2];
       double globaltot_u = tot_u;
