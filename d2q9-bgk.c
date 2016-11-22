@@ -297,18 +297,25 @@ int main(int argc, char* argv[])
     }
     recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
     for (int k = 1; k < size; k++){
-
-      MPI_Recv(recvbufFINAL,local_ncols*local_nrows*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
       i =0;
+      int x =0;
+      MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
       for (ii =0; ii<local_nrows;ii++){
         for (jj =0; jj<local_ncols;jj++){
           for(val =0;val<NSPEEDS;val++){
             cells[(ii*params.nx)+(k*local_nrows*params.nx)+jj].speeds[val]= recvbufFINAL[i];
             i++;
           }
+          x++;
+          if(x = 4){
+            MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
+            i =0;
+            x =0;
+          }
         }
       }
     }
+    free(recvbufFINAL);
 
     /* write final values and free memory */
     printf("==done==\n");
@@ -322,17 +329,25 @@ int main(int argc, char* argv[])
   else{
     free(sendgrid);
     free(recvgrid);
-    sendbufFINAL  = (float*)malloc(sizeof(float) * local_ncols*local_nrows*NSPEEDS);
+    sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
     i =0;
+    int x =0;
     for(ii =1;ii<local_nrows;ii++){
       for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[i] = partial_cells[ii*params.nx +jj].speeds[val];
           i++;
         }
+        x++;
+        if(x == 4){
+          // send first row left and receive right
+          MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+          i=0;
+          x =0;
+        }
       }
     }
-    MPI_Send(sendbufFINAL,local_ncols*local_nrows*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+    free(sendbufFINAL);
   }
   MPI_Finalize();
   free(partial_temp_cells);
