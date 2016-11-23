@@ -262,9 +262,10 @@ int main(int argc, char* argv[])
     MPI_Reduce(&vars, &global, 2, MPI_DOUBLE, MPI_SUM,MASTER, MPI_COMM_WORLD);
 
     if (rank == MASTER){
+      if(global[1] == 0.0 || local_density == 0.0 ) printf("FUCK it %d",it);
       av_vels[tt] = global[0]/global[1];
-      printf("==timestep: %d==\n", tt);
-      printf("av velocity: %.12E\n",av_vels[tt]);
+      //printf("==timestep: %d==\n", tt);
+      //printf("av velocity: %.12E\n",av_vels[tt]);
     }
   /*
     if (rank == MASTER){
