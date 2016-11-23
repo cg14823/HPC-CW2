@@ -482,7 +482,7 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
     {
       int cellAccess = ii * params.nx + jj;
       /* don't consider occupied cells */
-      if (!obstacles[((ii-1+rank*local_nrows)*params.nx+jj])
+      if (!obstacles[(ii-1+rank*local_nrows)*params.nx+jj])
       {
 
         /* compute local density total */
