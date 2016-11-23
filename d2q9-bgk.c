@@ -365,7 +365,6 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
   // copy data to be send left 1st row
   MPI_Status status;
   int tag =0;
-  int i =0;
 
   for (int jj = 0; jj<local_ncols;jj+=16){
     for(int x = 0; x<16;x++){
@@ -382,10 +381,8 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
         partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
-    }
   }
 
-  i =0;
   for (int jj = 0; jj < local_ncols;jj++){
     for(int x = 0;x<16;x++){
       for(int val = 0; val<NSPEEDS; val++){
