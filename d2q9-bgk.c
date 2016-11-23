@@ -260,11 +260,14 @@ int main(int argc, char* argv[])
         }
       }
     }
-    /*float vars [2] = {tot_u,(float)tot_cells};
+    float vars [2] = {tot_u,(float)tot_cells};
     float global[2]= {0,0};
-    if (rank == MASTER) printf("post  intialize vars\n",ii,local_nrows);
     MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-    if (rank == MASTER) printf("reduce\n",ii,local_nrows);*/
+
+    if (rank == MASTER){
+      av_vels[tt] = global[0]/global[1];
+    }
+  /*
     if (rank == MASTER){
       float global[2]= {tot_u,(float)tot_cells};
       float recv[2];
@@ -273,15 +276,13 @@ int main(int argc, char* argv[])
         global[0] += recv[0];
         global[1] += recv[1];
       }
-      av_vels[tt] = global[0]/global[1];
-
     }
+
     else{
       float send [2] ={tot_u,(float)tot_cells};
       MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
     }
-
-    if (rank == MASTER) printf("it done  %d\n",tt);
+    */
     MPI_Barrier(MPI_COMM_WORLD);
   }
   free(sendgrid);
