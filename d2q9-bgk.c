@@ -254,8 +254,6 @@ int main(int argc, char* argv[])
           tot_u += sqrt((u_x * u_x) + (u_y * u_y))/local_density;
           /* increase counter of inspected cells */
           tot_cells += 1;
-
-          printf("local density: %.12E\n",local_density);
         }
       }
     }
