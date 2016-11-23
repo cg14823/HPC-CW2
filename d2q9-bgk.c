@@ -266,8 +266,8 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      printf("==timestep: %d==\n", tt);
-      printf("av velocity: %.12E\n",av_vels[tt]);
+      //printf("==timestep: %d==\n", tt);
+      //printf("av velocity: %.12E\n",av_vels[tt]);
     }
   /*
     if (rank == MASTER){
@@ -376,9 +376,9 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     i++;
 
     if(i == 16){
-      // send first row left and receive right
-      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
-                  recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
+      // send first row left and receive right  --NOT TRUE
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
+                  recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
                   MPI_COMM_WORLD,&status);
 
       for (int x = 0; x < 16;x++){
@@ -398,8 +398,8 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     i++;
     if(i == 16){
       // send first row left and receive right
-      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
-                  recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
+                  recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
                   MPI_COMM_WORLD,&status);
 
       for (int x = 0; x < 16;x++){
