@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     // join grid
 
-    printf("start\n");
+    //printf("start\n");
     recvbufFINAL  = (double*)malloc(sizeof(double)*4 *NSPEEDS);
     for (int k = 1; k < size; k++){
       for(ii = 0;ii<local_nrows;ii++){
@@ -310,7 +310,7 @@ int main(int argc, char* argv[])
           }
         }
       }
-      printf("end receving from %d\n",k);
+      //printf("end receving from %d\n",k);
     }
     free(recvbufFINAL);
     for (ii =1 ; ii<local_nrows+1;ii++){
@@ -373,9 +373,9 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     i++;
 
     if(i == 16){
-      // send first row left and receive right  --NOT TRUE
-      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
-                  recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
+      // send first row left and receive right
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
+                  recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
                   MPI_COMM_WORLD,&status);
 
       for (int x = 0; x < 16;x++){
@@ -395,8 +395,8 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     i++;
     if(i == 16){
       // send first row left and receive right
-      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
-                  recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
+                  recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
                   MPI_COMM_WORLD,&status);
 
       for (int x = 0; x < 16;x++){
