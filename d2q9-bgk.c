@@ -373,12 +373,12 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
       }
     }      // send first row left and receive row from right  to put on top
     MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
-                recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
+                recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
                 MPI_COMM_WORLD,&status);
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        partial_cells[jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
@@ -391,12 +391,12 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     }
     // send last row right and receive left
     MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
-                recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
+                recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
                 MPI_COMM_WORLD,&status);
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[jj +x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        partial_cells[(local_nrows+1) * local_ncols + jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
@@ -445,7 +445,7 @@ int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_tem
       ** respecting periodic boundary conditions (wrap around) */
 
       int x_e = (jj + 1) % params.nx;
-      int x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+      int x_w = (jj == 0) ? ( params.nx - 1) : (jj - 1);
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
@@ -482,7 +482,7 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
     {
       int cellAccess = ii * params.nx + jj;
       /* don't consider occupied cells */
-      if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
+      if (!obstacles[((ii-1+rank*local_nrows)*params.nx+jj])
       {
 
         /* compute local density total */
