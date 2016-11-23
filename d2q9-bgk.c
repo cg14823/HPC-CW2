@@ -187,13 +187,10 @@ int main(int argc, char* argv[])
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
 
-  if(partial_cells == NULL) printf("%d cell nul\n",rank);
-  if(partial_temp_cells == NULL) printf("%d partial cell nul\n",rank);
-
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
-      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii+rank*local_nrows)+jj];
-      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii+rank*local_nrows)+jj];
+      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii +rank*local_nrows) * params.nx+jj];
+      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
     }
   }
 
@@ -228,7 +225,7 @@ int main(int argc, char* argv[])
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
-        if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
+        if (!obstacles[((ii-1)+rank*local_nrows)*params.nx+jj])
         {
           int cellAccess = ii * params.nx + jj;
           /* local density total */
