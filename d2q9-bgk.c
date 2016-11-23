@@ -312,7 +312,7 @@ int main(int argc, char* argv[])
       for(ii = 0;ii<local_nrows;ii++){
         for(jj=0;jj<local_ncols;jj ++){
           printf("pre receive package %d\n",jj*ii);
-          MPI_Recv(recvbufFINAL,NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
+          MPI_Recv(recvbufFINAL,NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
           printf("received package %d\n",jj*ii);
           for(int val =0; val <NSPEEDS; val++){
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val]= recvbufFINAL[val];
