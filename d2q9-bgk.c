@@ -297,6 +297,10 @@ int main(int argc, char* argv[])
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     // join grid
+    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+
     printf("start\n");
     recvbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
     for (int k = 1; k < size; k++){
@@ -324,9 +328,6 @@ int main(int argc, char* argv[])
     /* write final values and free memory */
     printf("==done==\n");
     printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
-    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
-    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
     write_values(params, cells, obstacles, av_vels);
   }
   else{
