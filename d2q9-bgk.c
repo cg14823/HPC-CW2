@@ -263,8 +263,8 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      //printf("==timestep: %d==\n", tt);
-      //printf("av velocity: %.12E\n",av_vels[tt]);
+      printf("==timestep: %d==\n", tt);
+      printf("av velocity: %.12E\n",av_vels[tt]);
     }
   /*
     if (rank == MASTER){
@@ -303,10 +303,10 @@ int main(int argc, char* argv[])
         for(jj=0;jj<local_ncols;jj+=4){
           MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
           for(int val =0; val <NSPEEDS; val++){
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val] = recvbufFINAL[val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+1].speeds[val] = recvbufFINAL[NSPEEDS+val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+2].speeds[val] = recvbufFINAL[NSPEEDS*2+val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+3].speeds[val] = recvbufFINAL[NSPEEDS*3+val];
+            cells[(k*local_nrows+ii)*params.nx+jj].speeds[val] = recvbufFINAL[val];
+            cells[(k*local_nrows+ii)*params.nx+jj+1].speeds[val] = recvbufFINAL[NSPEEDS+val];
+            cells[(k*local_nrows+ii)*params.nx+jj+2].speeds[val] = recvbufFINAL[NSPEEDS*2+val];
+            cells[(k*local_nrows+ii)*params.nx+jj+3].speeds[val] = recvbufFINAL[NSPEEDS*3+val];
           }
         }
       }
