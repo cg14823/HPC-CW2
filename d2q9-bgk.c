@@ -311,6 +311,7 @@ int main(int argc, char* argv[])
       printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
         for(jj=0;jj<local_ncols;jj += 4){
+          printf("pre receive package %d\n",jj);
           MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
           printf("received package %d\n",jj);
           for(int val =0; val <NSPEEDS; val++){
@@ -349,6 +350,7 @@ int main(int argc, char* argv[])
           sendbufFINAL[3*NSPEEDS+val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
         MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+        //printf("RANK SENT: %d\n",rank);
       }
     }
     free(sendbufFINAL);
