@@ -185,12 +185,12 @@ int main(int argc, char* argv[])
   right = (rank + 1) % size;
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
-  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
+  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
 
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
       partial_cells[(ii+1) * params.nx +jj] =  cells[(ii +rank*local_nrows) * params.nx+jj];
-      partial_temp_cells[(ii+1) * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
+      partial_temp_cells[ii * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
     }
   }
 
@@ -446,15 +446,15 @@ int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_tem
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
-      partial_temp_cells[ii * params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
-      partial_temp_cells[ii * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
-      partial_temp_cells[ii * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
-      partial_temp_cells[ii * params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
-      partial_temp_cells[ii * params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
-      partial_temp_cells[ii * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
-      partial_temp_cells[ii * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
-      partial_temp_cells[ii * params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
-      partial_temp_cells[ii * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+      partial_temp_cells[(ii-1)* params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
+      partial_temp_cells[(ii-1 )* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+      partial_temp_cells[(ii-1 )* params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+      partial_temp_cells[(ii-1) * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
     }
   }
 
@@ -478,6 +478,7 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
     for (jj = 0; jj < params.nx; jj++)
     {
       int cellAccess = ii * params.nx + jj;
+      int cellAccess2 = (ii-1) * params.nx + jj;
       /* don't consider occupied cells */
       if (!obstacles[(ii-1+rank*local_nrows)*params.nx+jj])
       {
@@ -486,23 +487,23 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
         double local_density = 0.0;
         for (int kk = 0; kk < NSPEEDS; kk++)
         {
-          local_density += partial_temp_cells[cellAccess].speeds[kk];
+          local_density += partial_temp_cells[cellAccess2].speeds[kk];
         }
         /* compute x velocity component */
-        double u_x = (partial_temp_cells[cellAccess].speeds[1]
-                      + partial_temp_cells[cellAccess].speeds[5]
-                      + partial_temp_cells[cellAccess].speeds[8]
-                      - (partial_temp_cells[cellAccess].speeds[3]
-                         + partial_temp_cells[cellAccess].speeds[6]
-                         + partial_temp_cells[cellAccess].speeds[7]))
+        double u_x = (partial_temp_cells[cellAccess2].speeds[1]
+                      + partial_temp_cells[cellAccess2].speeds[5]
+                      + partial_temp_cells[cellAccess2].speeds[8]
+                      - (partial_temp_cells[cellAccess2].speeds[3]
+                         + partial_temp_cells[cellAccess2].speeds[6]
+                         + partial_temp_cells[cellAccess2].speeds[7]))
                      / local_density;
         /* compute y velocity component */
-        double u_y = (partial_temp_cells[cellAccess].speeds[2]
-                      + partial_temp_cells[cellAccess].speeds[5]
-                      + partial_temp_cells[cellAccess].speeds[6]
-                      - (partial_temp_cells[cellAccess].speeds[4]
-                         + partial_temp_cells[cellAccess].speeds[7]
-                         + partial_temp_cells[cellAccess].speeds[8]))
+        double u_y = (partial_temp_cells[cellAccess2].speeds[2]
+                      + partial_temp_cells[cellAccess2].speeds[5]
+                      + partial_temp_cells[cellAccess2].speeds[6]
+                      - (partial_temp_cells[cellAccess2].speeds[4]
+                         + partial_temp_cells[cellAccess2].speeds[7]
+                         + partial_temp_cells[cellAccess2].speeds[8]))
                      / local_density;
 
         /* velocity squared */
@@ -526,20 +527,20 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
 
         for (int kk = 0; kk < NSPEEDS; kk++)
           {
-            partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess].speeds[kk]
+            partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess2].speeds[kk]
                                                     + params.omega
-                                                    * (d_equ[kk] - partial_temp_cells[cellAccess].speeds[kk]);
+                                                    * (d_equ[kk] - partial_temp_cells[cellAccess2].speeds[kk]);
           }
       }
       else{
-        partial_cells[cellAccess].speeds[1] = partial_temp_cells[cellAccess].speeds[3];
-        partial_cells[cellAccess].speeds[2] = partial_temp_cells[cellAccess].speeds[4];
-        partial_cells[cellAccess].speeds[3] = partial_temp_cells[cellAccess].speeds[1];
-        partial_cells[cellAccess].speeds[4] = partial_temp_cells[cellAccess].speeds[2];
-        partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess].speeds[7];
-        partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess].speeds[8];
-        partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess].speeds[5];
-        partial_cells[cellAccess].speeds[8] = partial_temp_cells[cellAccess].speeds[6];
+        partial_cells[cellAccess].speeds[1] = partial_temp_cells[cellAccess2].speeds[3];
+        partial_cells[cellAccess].speeds[2] = partial_temp_cells[cellAccess2].speeds[4];
+        partial_cells[cellAccess].speeds[3] = partial_temp_cells[cellAccess2].speeds[1];
+        partial_cells[cellAccess].speeds[4] = partial_temp_cells[cellAccess2].speeds[2];
+        partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess2].speeds[7];
+        partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess2].speeds[8];
+        partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess2].speeds[5];
+        partial_cells[cellAccess].speeds[8] = partial_temp_cells[cellAccess2].speeds[6];
       }
     }
   }
