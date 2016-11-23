@@ -184,8 +184,8 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  partial_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
-  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed*) * local_ncols * (local_nrows + 2));
+  partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
+  partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
 
   if(partial_cells == NULL) printf("%d cell nul\n",rank);
   if(partial_temp_cells == NULL) printf("%d partial cell nul\n",rank);
