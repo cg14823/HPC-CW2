@@ -254,6 +254,8 @@ int main(int argc, char* argv[])
           tot_u += sqrt((u_x * u_x) + (u_y * u_y))/local_density;
           /* increase counter of inspected cells */
           tot_cells += 1;
+
+          printf("local density: %.12E\n",local_density);
         }
       }
     }
@@ -263,9 +265,9 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      printf("==timestep: %d==\n", tt);
-      printf("av velocity: %.12E\n",av_vels[tt]);
-      printf("global[1]: %.12E\n",global[1]);
+      //printf("==timestep: %d==\n", tt);
+      //printf("av velocity: %.12E\n",av_vels[tt]);
+      //printf("global[1]: %.12E\n",global[1]);
     }
   /*
     if (rank == MASTER){
