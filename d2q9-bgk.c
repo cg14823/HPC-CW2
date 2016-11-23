@@ -378,8 +378,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[jj +x].speeds[val] = recvgrid[x*NSPEEDS +val];
-
+        partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
@@ -397,7 +396,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        partial_cells[jj +x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
