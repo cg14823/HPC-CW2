@@ -288,7 +288,6 @@ int main(int argc, char* argv[])
   free(sendgrid);
   free(recvgrid);
   if(rank == MASTER){
-    printf("after loop\n");
     gettimeofday(&timstr, NULL);
     toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     getrusage(RUSAGE_SELF, &ru);
@@ -302,7 +301,7 @@ int main(int argc, char* argv[])
     printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
     printf("start\n");
-    recvbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float*) *NSPEEDS);
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
@@ -331,7 +330,7 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    sendbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
+    sendbufFINAL  = (float*)malloc(sizeof(float*) *NSPEEDS);
     int x =0;
     for(ii =1;ii<local_nrows+1;ii++){
       for(jj=0;jj<local_ncols;jj++){
