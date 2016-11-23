@@ -209,6 +209,7 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
+    if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
@@ -284,6 +285,7 @@ int main(int argc, char* argv[])
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER) printf("it %d\n",tt);
   }
   free(sendgrid);
   free(recvgrid);
