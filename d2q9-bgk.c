@@ -101,7 +101,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int lo
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows);
 int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank);
 int write_values(const t_param params, t_speed* cells, int* obstacles, double* av_vels);
-int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right);
+int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank);
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
   {
     if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-    halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right);
+    halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
@@ -363,45 +363,39 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   return EXIT_SUCCESS;
 }
 
-int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right){
+int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank){
   // copy data to be send left 1st row
   MPI_Status status;
   int tag =0;
 
-  for (int jj = 0; jj<local_ncols;jj+=16){
-    for(int x = 0; x<16;x++){
-      for(int val = 0; val<NSPEEDS; val++){
-        sendgrid[x*NSPEEDS +val] = partial_cells[local_ncols + jj+x].speeds[val];
-      }
-    }      // send first row left and receive row from right  to put on top
-    MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
-                recvgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,
-                MPI_COMM_WORLD,&status);
+  for (int r =0; r<2;r++){
+    for (int jj = 0; jj<local_ncols;jj+=16){
+      // send first row left and receive row from right  to put on top
+      if(rank % 2 == r){
 
-    for (int x = 0; x < 16;x++){
-      for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        for(int x = 0; x<16;x++){
+          for(int val = 0; val<NSPEEDS; val++){
+            sendgrid[x*NSPEEDS +val] = partial_cells[local_ncols + jj+x].speeds[val];
+            recvgrid[x*NSPEEDS +val] = partial_cells[local_nrows * local_ncols + jj+x].speeds[val];
+          }
+        }
+        MPI_Send(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,MPI_COMM_WORLD);
+        MPI_Send(recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,MPI_COMM_WORLD);
+      }
+      else{
+        MPI_Recv(recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,MPI_COMM_WORLD,&status);
+        MPI_Recv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,MPI_COMM_WORLD,&status)
+        for (int x = 0; x < 16;x++){
+          for(int val = 0; val<NSPEEDS; val++){
+            partial_cells[(local_nrows+1) * local_ncols + jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
+            partial_cells[jj+x]= sendgrid[x*NSPEEDS +val];
+          }
+        }
       }
     }
   }
 
-  for (int jj = 0; jj < local_ncols;jj+=16){
-    for(int x = 0;x<16;x++){
-      for(int val = 0; val<NSPEEDS; val++){
-        sendgrid[x*NSPEEDS +val] = partial_cells[local_nrows * local_ncols + jj+x].speeds[val];
-      }
-    }
-    // send last row right and receive left
-    MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
-                recvgrid,16*NSPEEDS,MPI_DOUBLE,right,tag,
-                MPI_COMM_WORLD,&status);
 
-    for (int x = 0; x < 16;x++){
-      for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows+1) * local_ncols + jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
-      }
-    }
-  }
   return EXIT_SUCCESS;
 }
 
