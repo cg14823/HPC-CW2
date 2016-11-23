@@ -302,10 +302,11 @@ int main(int argc, char* argv[])
 
     printf("start\n");
     recvbufFINAL  = (float*)malloc(sizeof(float*)*4 *NSPEEDS);
+    if (recvbufFINAL == NULL) printf("DAMMMMMMMMMMMMMMMM\n");
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
-        for(jj=0;jj<local_ncols;jj++){
+        for(jj=0;jj<local_ncols;jj+=4){
           printf("pre receive package %d\n",jj*ii);
           MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
           printf("received package %d\n",jj*ii);
@@ -335,7 +336,7 @@ int main(int argc, char* argv[])
   else{
     sendbufFINAL  = (float*)malloc(sizeof(float*) * 4 *NSPEEDS);
     for(ii =1;ii<local_nrows+1;ii++){
-      for(jj=0;jj<local_ncols;jj++){
+      for(jj=0;jj<local_ncols;jj += 4){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
           sendbufFINAL[NSPEEDS +val] = partial_cells[ii*params.nx +jj+1].speeds[val];
