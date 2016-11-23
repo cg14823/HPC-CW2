@@ -383,7 +383,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
       for (int x = 0; x < 16;x++){
         for(int val = 0; val<NSPEEDS; val++){
-          partial_cells[(local_nrows +1)*local_nrows +jj -i+1 + x].speeds[val] = recvgrid[x*NSPEEDS +val];
+          partial_cells[(local_nrows +1)*local_ncols +jj -i+1 + x].speeds[val] = recvgrid[x*NSPEEDS +val];
         }
       }
       i =0;
