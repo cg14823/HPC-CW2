@@ -348,9 +348,8 @@ int main(int argc, char* argv[])
           sendbufFINAL[2*NSPEEDS+val] = partial_cells[ii*params.nx +jj+2].speeds[val];
           sendbufFINAL[3*NSPEEDS+val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
-        printf("RANK %d package: %d\n",rank,jj*(ii-1));
+        //printf("RANK %d package: %d\n",rank,jj*(ii-1));
         MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
-
       }
     }
     free(sendbufFINAL);
