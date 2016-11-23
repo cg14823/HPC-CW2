@@ -309,20 +309,13 @@ int main(int argc, char* argv[])
     recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
-      i =0;
-      int x =0;
-      MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-      for (ii =0; ii<local_nrows;ii++){
-        for (jj =0; jj<local_ncols;jj++){
-          for(val =0;val<NSPEEDS;val++){
-            cells[(ii*params.nx)+(k*local_nrows*params.nx)+jj].speeds[val]= recvbufFINAL[i];
-            i++;
-          }
-          x++;
-          if(x = 4){
-            MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-            i =0;
-            x =0;
+      for(ii = 0;ii<local_nrows;ii++){
+        for(jj=0;jj<local_ncols;jj += 4){
+          MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
+          for(int x =0; x< 4;x++){
+            for(int val =0; val <NSPEEDS; val++){
+              cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+x].speeds[val]= recvbufFINAL[x*NSPEEDS +val];
+            }
           }
         }
       }
@@ -343,13 +336,11 @@ int main(int argc, char* argv[])
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
-    i =0;
     int x =0;
     for(ii =1;ii<local_nrows+1;ii++){
       for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
-          sendbufFINAL[i] = partial_cells[ii*params.nx +jj].speeds[val];
-          i++;
+          sendbufFINAL[x*NSPEEDS+val] = partial_cells[ii*params.nx +jj].speeds[val];
         }
         x++;
         if(x == 4){
