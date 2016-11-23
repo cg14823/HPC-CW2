@@ -6,6 +6,7 @@
 
 #PBS -N d2q9-bgk
 #PBS -o d2q9-bgk.out
+#PBS -l epilogue=~ggdagw/epilogue.sh
 #PBS -q teaching
 
 #! Number of nodes (in this case 1 node with 4 CPU cores)
