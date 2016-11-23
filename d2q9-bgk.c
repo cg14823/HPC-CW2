@@ -312,12 +312,14 @@ int main(int argc, char* argv[])
       for(ii = 0;ii<local_nrows;ii++){
         for(jj=0;jj<local_ncols;jj += 4){
           MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
-          for(int x =0; x< 4;x++){
-            for(int val =0; val <NSPEEDS; val++){
-              cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+x].speeds[val]= recvbufFINAL[x*NSPEEDS +val];
-            }
-          }
           printf("received package %d\n",jj);
+          for(int val =0; val <NSPEEDS; val++){
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val]= recvbufFINAL[val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+1].speeds[val]= recvbufFINAL[NSPEEDS +val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+2].speeds[val]= recvbufFINAL[2*NSPEEDS +val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+3].speeds[val]= recvbufFINAL[3*NSPEEDS +val];
+          }
+          printf("after received package %d\n",jj);
         }
       }
       printf("end receving from %d\n",k);
@@ -333,7 +335,7 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    //printf("RANKS OUTISED %d\n",rank);
+    printf("RANK: %d\n",rank);
     free(sendgrid);
     free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
@@ -346,9 +348,9 @@ int main(int argc, char* argv[])
           sendbufFINAL[2*NSPEEDS+val] = partial_cells[ii*params.nx +jj+2].speeds[val];
           sendbufFINAL[3*NSPEEDS+val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
-          MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
-        }
+        MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
       }
+    }
     free(sendbufFINAL);
   }
   MPI_Finalize();
