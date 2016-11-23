@@ -301,16 +301,19 @@ int main(int argc, char* argv[])
     printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
     printf("start\n");
-    recvbufFINAL  = (float*)malloc(sizeof(float*) *NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float*)*4 *NSPEEDS);
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
-        for(jj=0;jj<local_ncols;jj ++){
+        for(jj=0;jj<local_ncols;jj++){
           printf("pre receive package %d\n",jj*ii);
-          MPI_Recv(recvbufFINAL,NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
+          MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
           printf("received package %d\n",jj*ii);
           for(int val =0; val <NSPEEDS; val++){
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val]= recvbufFINAL[val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val] = recvbufFINAL[val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+1].speeds[val] = recvbufFINAL[NSPEEDS+val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+2].speeds[val] = recvbufFINAL[NSPEEDS*2+val];
+            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+3].speeds[val] = recvbufFINAL[NSPEEDS*3+val];
           }
           printf("after received package %d\n",jj);
         }
@@ -330,15 +333,16 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    sendbufFINAL  = (float*)malloc(sizeof(float*) *NSPEEDS);
-    int x =0;
+    sendbufFINAL  = (float*)malloc(sizeof(float*) * 4 *NSPEEDS);
     for(ii =1;ii<local_nrows+1;ii++){
       for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
+          sendbufFINAL[NSPEEDS +val] = partial_cells[ii*params.nx +jj+1].speeds[val];
+          sendbufFINAL[2*NSPEEDS +val] = partial_cells[ii*params.nx +jj+2].speeds[val];
+          sendbufFINAL[3*NSPEEDS +val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
-        if (rank == 1)printf("package: %d %d\n",jj,ii);
-        MPI_Send(sendbufFINAL,NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+        MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
       }
     }
     free(sendbufFINAL);
