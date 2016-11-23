@@ -306,19 +306,16 @@ int main(int argc, char* argv[])
         cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
       }
     }
-    recvbufFINAL  = (float*)malloc(sizeof(float) *4 *NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
-        for(jj=0;jj<local_ncols;jj += 4){
+        for(jj=0;jj<local_ncols;jj ++){
           printf("pre receive package %d\n",jj*ii);
-          MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
+          MPI_Recv(recvbufFINAL,NSPEEDS,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
           printf("received package %d\n",jj*ii);
           for(int val =0; val <NSPEEDS; val++){
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val]= recvbufFINAL[val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+1].speeds[val]= recvbufFINAL[NSPEEDS +val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+2].speeds[val]= recvbufFINAL[2*NSPEEDS +val];
-            cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+3].speeds[val]= recvbufFINAL[3*NSPEEDS +val];
           }
           printf("after received package %d\n",jj);
         }
@@ -338,18 +335,15 @@ int main(int argc, char* argv[])
   else{
     free(sendgrid);
     free(recvgrid);
-    sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
+    sendbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
     int x =0;
     for(ii =1;ii<local_nrows+1;ii++){
-      for(jj=0;jj<local_ncols;jj+=4){
+      for(jj=0;jj<local_ncols;jj++){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
-          sendbufFINAL[NSPEEDS+val] = partial_cells[ii*params.nx +jj+1].speeds[val];
-          sendbufFINAL[2*NSPEEDS+val] = partial_cells[ii*params.nx +jj+2].speeds[val];
-          sendbufFINAL[3*NSPEEDS+val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
         //printf("RANK %d package: %d\n",rank,jj*(ii-1));
-        MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+        MPI_Send(sendbufFINAL,NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
       }
     }
     free(sendbufFINAL);
