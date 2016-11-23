@@ -285,7 +285,8 @@ int main(int argc, char* argv[])
     //if (rank == MASTER) printf("it done  %d\n",tt);
     MPI_Barrier(MPI_COMM_WORLD);
   }
-
+  free(sendgrid);
+  free(recvgrid);
   if(rank == MASTER){
     printf("after loop\n");
     gettimeofday(&timstr, NULL);
@@ -295,17 +296,8 @@ int main(int argc, char* argv[])
     usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-    printf("pre free\n");
-    free(sendgrid);
-    free(recvgrid);
-
-    printf("after free\n");
     // join grid
-    for (ii =1 ; ii<local_nrows+1;ii++){
-      for (jj= 0;jj < local_ncols;jj++){
-        cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
-      }
-    }
+    printf("start\n");
     recvbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
     for (int k = 1; k < size; k++){
       printf("start receving from %d\n",k);
@@ -323,6 +315,11 @@ int main(int argc, char* argv[])
       printf("end receving from %d\n",k);
     }
     free(recvbufFINAL);
+    for (ii =1 ; ii<local_nrows+1;ii++){
+      for (jj= 0;jj < local_ncols;jj++){
+        cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
+      }
+    }
 
     /* write final values and free memory */
     printf("==done==\n");
@@ -333,8 +330,6 @@ int main(int argc, char* argv[])
     write_values(params, cells, obstacles, av_vels);
   }
   else{
-    free(sendgrid);
-    free(recvgrid);
     sendbufFINAL  = (float*)malloc(sizeof(float) *NSPEEDS);
     int x =0;
     for(ii =1;ii<local_nrows+1;ii++){
