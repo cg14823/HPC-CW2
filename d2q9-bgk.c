@@ -383,7 +383,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     }
   }
 
-  for (int jj = 0; jj < local_ncols;jj++){
+  for (int jj = 0; jj < local_ncols;jj+=16){
     for(int x = 0;x<16;x++){
       for(int val = 0; val<NSPEEDS; val++){
         sendgrid[x*NSPEEDS +val] = partial_cells[local_nrows * local_ncols + jj+x].speeds[val];
