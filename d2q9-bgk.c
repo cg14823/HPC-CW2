@@ -207,6 +207,7 @@ int main(int argc, char* argv[])
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     printf("----- %d\n", params.maxIters);
+    if (size != 64) printf("DAMMMMMMMMM\n");
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
@@ -229,7 +230,6 @@ int main(int argc, char* argv[])
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
-        if (((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj >= params.nx * params.ny) printf("FUUUUUUUUUUUUUUUUUUCK\n");
         if (!obstacles[((ii-1)*params.nx)+(rank*local_nrows*params.nx)+jj])
         {
           int cellAccess = ii * params.nx + jj;
@@ -282,7 +282,7 @@ int main(int argc, char* argv[])
       float send [2] ={tot_u,(float)tot_cells};
       MPI_Send(&send,2,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
     }
-    //if (rank == MASTER) printf("it done  %d\n",tt);
+    if (rank == MASTER) printf("it done  %d\n",tt);
     MPI_Barrier(MPI_COMM_WORLD);
   }
   free(sendgrid);
@@ -376,13 +376,13 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
     }
     i++;
 
-    if(i == 4){
+    if(i == 16){
       // send first row left and receive right
-      MPI_Sendrecv(sendgrid,4*NSPEEDS,MPI_FLOAT,left,tag,
-                  recvgrid,4*NSPEEDS,MPI_FLOAT,right,tag,
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_FLOAT,left,tag,
+                  recvgrid,16*NSPEEDS,MPI_FLOAT,right,tag,
                   MPI_COMM_WORLD,&status);
 
-      for (int x = 0; x < 4;x++){
+      for (int x = 0; x < 16;x++){
         for(int val = 0; val<NSPEEDS; val++){
           partial_cells[(local_nrows +1)*params.nx +jj -i+1 + x].speeds[val] = recvgrid[x*NSPEEDS +val];
         }
@@ -397,13 +397,13 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
       sendgrid[i*NSPEEDS +val] = partial_cells[local_nrows * params.nx + jj].speeds[val];
     }
     i++;
-    if(i == 4){
+    if(i == 16){
       // send first row left and receive right
-      MPI_Sendrecv(sendgrid,4*NSPEEDS,MPI_FLOAT,right,tag,
-                  recvgrid,4*NSPEEDS,MPI_FLOAT,left,tag,
+      MPI_Sendrecv(sendgrid,16*NSPEEDS,MPI_FLOAT,right,tag,
+                  recvgrid,16*NSPEEDS,MPI_FLOAT,left,tag,
                   MPI_COMM_WORLD,&status);
 
-      for (int x = 0; x < 4;x++){
+      for (int x = 0; x < 16;x++){
         for(int val = 0; val<NSPEEDS; val++){
           partial_cells[jj -i+1 +x].speeds[val] = recvgrid[x*NSPEEDS +val];
         }
