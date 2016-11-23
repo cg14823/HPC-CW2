@@ -295,27 +295,19 @@ int main(int argc, char* argv[])
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     // join grid
-    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
-    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
     printf("start\n");
     recvbufFINAL  = (float*)malloc(sizeof(float)*4 *NSPEEDS);
-    if (recvbufFINAL == NULL) printf("DAMMMMMMMMMMMMMMMM\n");
     for (int k = 1; k < size; k++){
-      printf("start receving from %d\n",k);
       for(ii = 0;ii<local_nrows;ii++){
         for(jj=0;jj<local_ncols;jj+=4){
-          printf("pre receive package %d\n",jj*ii);
           MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-          printf("received package %d\n",jj*ii);
           for(int val =0; val <NSPEEDS; val++){
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj].speeds[val] = recvbufFINAL[val];
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+1].speeds[val] = recvbufFINAL[NSPEEDS+val];
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+2].speeds[val] = recvbufFINAL[NSPEEDS*2+val];
             cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+3].speeds[val] = recvbufFINAL[NSPEEDS*3+val];
           }
-          printf("after received package %d\n",jj);
         }
       }
       printf("end receving from %d\n",k);
@@ -330,6 +322,10 @@ int main(int argc, char* argv[])
     /* write final values and free memory */
     printf("==done==\n");
     printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+
     write_values(params, cells, obstacles, av_vels);
   }
   else{
@@ -347,6 +343,7 @@ int main(int argc, char* argv[])
     }
     free(sendbufFINAL);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   free(partial_temp_cells);
   free(partial_cells);
