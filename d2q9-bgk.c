@@ -317,6 +317,7 @@ int main(int argc, char* argv[])
               cells[(k*params.nx*local_nrows)+(ii*params.nx)+jj+x].speeds[val]= recvbufFINAL[x*NSPEEDS +val];
             }
           }
+          printf("received package %d\n",jj);
         }
       }
       printf("end receving from %d\n",k);
@@ -338,16 +339,14 @@ int main(int argc, char* argv[])
     sendbufFINAL  = (float*)malloc(sizeof(float) *4*NSPEEDS);
     int x =0;
     for(ii =1;ii<local_nrows+1;ii++){
-      for(jj=0;jj<local_ncols;jj++){
+      for(jj=0;jj<local_ncols;jj+=4){
         for(val =0; val<NSPEEDS;val++){
-          sendbufFINAL[x*NSPEEDS+val] = partial_cells[ii*params.nx +jj].speeds[val];
+          sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
+          sendbufFINAL[NSPEEDS+val] = partial_cells[ii*params.nx +jj+1].speeds[val];
+          sendbufFINAL[2*NSPEEDS+val] = partial_cells[ii*params.nx +jj+2].speeds[val];
+          sendbufFINAL[3*NSPEEDS+val] = partial_cells[ii*params.nx +jj+3].speeds[val];
         }
-        x++;
-        if(x == 4){
-          // send first row left and receive right
           MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
-          i=0;
-          x =0;
         }
       }
     }
