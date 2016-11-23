@@ -257,9 +257,9 @@ int main(int argc, char* argv[])
         }
       }
     }
-    double vars [2] = {tot_u,(double)tot_cells};
-    double global[2]= {0,0};
-    MPI_Reduce(&vars, &global, 2, MPI_DOUBLE, MPI_SUM,MASTER, MPI_COMM_WORLD);
+    //double vars [2] = {tot_u,(double)tot_cells};
+    // double global[2]= {0,0};
+    //MPI_Reduce(&vars, &global, 2, MPI_DOUBLE, MPI_SUM,MASTER, MPI_COMM_WORLD);
 
     /*if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
@@ -378,8 +378,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-
-        partial_cells[jj +x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
@@ -397,7 +396,7 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
     for (int x = 0; x < 16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        partial_cells[(local_nrows +1)*local_ncols +jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
+        partial_cells[jj +x].speeds[val] = recvgrid[x*NSPEEDS +val];
       }
     }
   }
