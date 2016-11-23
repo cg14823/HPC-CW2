@@ -349,7 +349,6 @@ int main(int argc, char* argv[])
           MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
         }
       }
-    }
     free(sendbufFINAL);
   }
   MPI_Finalize();
