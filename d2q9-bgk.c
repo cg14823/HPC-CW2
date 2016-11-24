@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
   int right;
   int size;
   int val;
-  int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
+  int local_nrows = params.ny/ 32;       // all possibility nicely divicble by 64
   int local_ncols = params.nx;      // devide the grid by rows
 
   MPI_Status status;
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-    if (size != 64) printf("DAMMMMMMMMM\n");
+    //if (size != 64) printf("DAMMMMMMMMM\n");
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
