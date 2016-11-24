@@ -370,7 +370,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   return EXIT_SUCCESS;
 }
 
-int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank,t_speed* top_halo, t_speed* bottom_halo){
+int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank,float* top_halo, float* bottom_halo){
   // copy data to be send left 1st row
   MPI_Status status;
   int tag =0;
@@ -446,7 +446,7 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
   return EXIT_SUCCESS;
 }
 
-int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows, t_speed* top_halo, t_speed* bottom_halo)
+int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows, float* top_halo, float* bottom_halo)
 {
   for (int ii = 0; ii < local_nrows; ii++)
   {
