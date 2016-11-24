@@ -390,9 +390,9 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
   for (int jj = 0; jj<local_ncols;jj+=CHUNK){
     // send first row left and receive row from right  to put on top
     for(int x = 0; x<CHUNK;x++){
-      sendgrid[x*HSPEEDS] = partial_cells[jj+x].speeds[4];
-      sendgrid[x*HSPEEDS+1] = partial_cells[jj+x].speeds[7];
-      sendgrid[x*HSPEEDS+2] = partial_cells[jj+x].speeds[8];
+      sendgrid[x*HSPEEDS] = partial_cells[jj+x].speeds[2];
+      sendgrid[x*HSPEEDS+1] = partial_cells[jj+x].speeds[5];
+      sendgrid[x*HSPEEDS+2] = partial_cells[jj+x].speeds[6];
     }
     MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,left,tag,
                 recvgrid,chunksize,MPI_FLOAT,right,tag,
@@ -407,9 +407,9 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
   for (int jj = 0; jj<local_ncols;jj+=CHUNK){
     // send first row left and receive row from right  to put on top
     for(int x = 0; x<CHUNK;x++){
-      sendgrid[x*HSPEEDS] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[2];
-      sendgrid[x*HSPEEDS+1] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[5];
-      sendgrid[x*HSPEEDS+2] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[6];
+      sendgrid[x*HSPEEDS] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[4];
+      sendgrid[x*HSPEEDS+1] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[7];
+      sendgrid[x*HSPEEDS+2] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[8];
     }
     MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,right,tag,
                 recvgrid,chunksize,MPI_FLOAT,left,tag,
