@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
   int right;
   int size;
   int val;
-  int local_nrows = params.ny/ 32;       // all possibility nicely divicble by 64
+  int local_nrows = params.ny/ 64;       // all possibility nicely divicble by 64
   int local_ncols = params.nx;      // devide the grid by rows
 
   MPI_Status status;
@@ -199,6 +199,21 @@ int main(int argc, char* argv[])
       partial_temp_cells[ii * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
     }
   }
+  for(jj=0;jj<local_ncols;jj++){
+    if (rank == size-1){
+      top_halo[jj] = cells[jj];
+      bottomhalo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
+    }
+    else if (rank == MASTER){
+      top_halo[jj] = cells[(local_nrows +rank*local_nrows) * params.nx+jj];
+      bottomhalo[jj] = cells[(size * local_nrows-1) * params.nx+jj];
+    }
+    else{
+      top_halo[jj] = cells[(local_nrows +rank*local_nrows) * params.nx+jj];
+      bottomhalo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
+    }
+
+  }
 
   sendgrid = (double*)malloc(sizeof(double) * 16 * NSPEEDS);
   recvgrid = (double*)malloc(sizeof(double) * 16 * NSPEEDS);
@@ -213,7 +228,6 @@ int main(int argc, char* argv[])
   {
     //  if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-    halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
@@ -270,7 +284,7 @@ int main(int argc, char* argv[])
       printf("av velocity: %.12E\n",av_vels[tt]);
       printf("global[1]: %.12E\n",global[1]);
     }
-
+    halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     // MPI_Barrier(MPI_COMM_WORLD);
     //if (rank == MASTER) printf("it %d\n",tt);
   }
