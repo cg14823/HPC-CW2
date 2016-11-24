@@ -63,6 +63,7 @@
 #define FINALSTATEFILE  "final_state.dat"
 #define AVVELSFILE      "av_vels.dat"
 #define MASTER 0
+#define CHUNK 32
 
 /* struct to hold the parameter values */
 typedef struct
@@ -217,8 +218,8 @@ int main(int argc, char* argv[])
 
   }
 
-  sendgrid = (float*)malloc(sizeof(float) * 32 * NSPEEDS);
-  recvgrid = (float*)malloc(sizeof(float) * 32 * NSPEEDS);
+  sendgrid = (float*)malloc(sizeof(float) * CHUNK * NSPEEDS);
+  recvgrid = (float*)malloc(sizeof(float) * CHUNK * NSPEEDS);
 
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
@@ -283,7 +284,7 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      printf("==timestep: %d==\n", tt);
+      //printf("==timestep: %d==\n", tt);
       //printf("av velocity: %.12E\n",av_vels[tt]);
       //printf("global[1]: %.12E\n",global[1]);
     }
@@ -301,13 +302,13 @@ int main(int argc, char* argv[])
     // join grid
 
     //printf("start\n");
-    recvbufFINAL  = (float*)malloc(sizeof(float)*16 *NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float)*CHUNK *NSPEEDS);
     for (int k = 1; k < size; k++){
       int rows = calc_nrows_from_rank(k,size,params.ny);
       for(ii = 0;ii<rows;ii++){
-        for(jj=0;jj<local_ncols;jj+=16){
-          MPI_Recv(recvbufFINAL,16*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-          for(int x =0;x<16;x++){
+        for(jj=0;jj<local_ncols;jj+=CHUNK){
+          MPI_Recv(recvbufFINAL,CHUNK*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
+          for(int x =0;x<CHUNK;x++){
             for(int val =0; val <NSPEEDS; val++){
               cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * NSPEEDS +val];
             }
@@ -334,15 +335,15 @@ int main(int argc, char* argv[])
 
   }
   else{
-    sendbufFINAL  = (float*)malloc(sizeof(float) * 16 *NSPEEDS);
+    sendbufFINAL  = (float*)malloc(sizeof(float) * CHUNK *NSPEEDS);
     for(ii =0;ii<local_nrows;ii++){
-      for(jj=0;jj<local_ncols;jj += 16){
-        for(int x =0;x<16;x++){
+      for(jj=0;jj<local_ncols;jj += CHUNK){
+        for(int x =0;x<CHUNK;x++){
           for(int val =0; val <NSPEEDS; val++){
             sendbufFINAL[x*NSPEEDS+val] = partial_cells[ii*params.nx +jj+x].speeds[val];
           }
         }
-        MPI_Send(sendbufFINAL,16*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+        MPI_Send(sendbufFINAL,CHUNK*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
       }
     }
     free(sendbufFINAL);
@@ -368,11 +369,11 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
   // copy data to be send left 1st row
   MPI_Status status;
   int tag =0;
-  int chunksize = 32*NSPEEDS;
+  int chunksize = CHUNK*NSPEEDS;
 
-  for (int jj = 0; jj<local_ncols;jj+=32){
+  for (int jj = 0; jj<local_ncols;jj+=CHUNK){
     // send first row left and receive row from right  to put on top
-    for(int x = 0; x<32;x++){
+    for(int x = 0; x<CHUNK;x++){
       for(int val = 0; val<NSPEEDS; val++){
         sendgrid[x*NSPEEDS +val] = partial_cells[jj+x].speeds[val];
       }
@@ -380,7 +381,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
     MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,left,tag,
                 recvgrid,chunksize,MPI_FLOAT,right,tag,
                 MPI_COMM_WORLD,&status);
-    for(int x = 0; x<32;x++){
+    for(int x = 0; x<CHUNK;x++){
       for(int val = 0; val<NSPEEDS; val++){
         top_halo[jj+x].speeds[val] = recvgrid[x*NSPEEDS+val];
       }
@@ -388,9 +389,9 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
 
   }
 
-  for (int jj = 0; jj<local_ncols;jj+=32){
+  for (int jj = 0; jj<local_ncols;jj+=CHUNK){
     // send first row left and receive row from right  to put on top
-    for(int x = 0; x<32;x++){
+    for(int x = 0; x<CHUNK;x++){
       for(int val = 0; val<NSPEEDS; val++){
         sendgrid[x*NSPEEDS +val] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[val];
       }
@@ -398,7 +399,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
     MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,right,tag,
                 recvgrid,chunksize,MPI_FLOAT,left,tag,
                 MPI_COMM_WORLD,&status);
-    for(int x = 0; x<32;x++){
+    for(int x = 0; x<CHUNK;x++){
       for(int val = 0; val<NSPEEDS; val++){
         bottom_halo[jj+x].speeds[val] = recvgrid[x*NSPEEDS+val];
       }
