@@ -415,7 +415,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
                 recvgrid,chunksize,MPI_FLOAT,left,tag,
                 MPI_COMM_WORLD,&status);
     for(int x = 0; x<CHUNK;x++){
-      bottom_halo[(jj+x)*HSPEEDS]] = recvgrid[x*HSPEEDS];
+      bottom_halo[(jj+x)*HSPEEDS] = recvgrid[x*HSPEEDS];
       bottom_halo[(jj+x)*HSPEEDS+1] = recvgrid[x*HSPEEDS+1];
       bottom_halo[(jj+x)*HSPEEDS+2] = recvgrid[x*HSPEEDS+2];
     }
