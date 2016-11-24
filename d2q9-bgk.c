@@ -215,6 +215,7 @@ int main(int argc, char* argv[])
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
+    MPI_Barrier(MPI_COMM_WORLD);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
 
