@@ -61,7 +61,7 @@
 #define FINALSTATEFILE  "final_state.dat"
 #define AVVELSFILE      "av_vels.dat"
 #define MASTER 0
-#define CHUNK 64
+#define CHUNK 128
 
 /* struct to hold the parameter values */
 typedef struct
