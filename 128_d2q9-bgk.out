@@ -1,0 +1,11 @@
+Running on host node47-007
+Time is Thu Nov 24 12:35:08 GMT 2016
+Directory is /panfs/panasas01/cosc/cg14823/HPC/HPC-CW2
+PBS job ID is 5167134.master.cm.cluster
+This jobs runs on the following machines:
+node47-007 node47-015 node47-010 node47-008
+==done==
+Reynolds number:		9.763598020516E+00
+Elapsed time:			2.110342 (s)
+Elapsed user CPU time:		2.121677 (s)
+Elapsed system CPU time:	0.021996 (s)
