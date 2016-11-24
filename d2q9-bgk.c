@@ -211,11 +211,10 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-  //  if (rank == MASTER) printf("it %d\n",tt);
+    //  if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
-    MPI_Barrier(MPI_COMM_WORLD);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
 
@@ -271,21 +270,6 @@ int main(int argc, char* argv[])
       printf("av velocity: %.12E\n",av_vels[tt]);
       printf("global[1]: %.12E\n",global[1]);
     }
-    /*
-    if (rank == MASTER){
-      double global[2]= {tot_u,(double)tot_cells};
-      double recv[2];
-      for (int k =1; k< size;k++){
-        MPI_Recv(&recv,2,MPI_DOUBLE,k,tag,MPI_COMM_WORLD,&status);
-        global[0] += recv[0];
-        global[1] += recv[1];
-      }
-      av_vels[tt] = global[0]/global[1];
-    }
-    else{
-      double send [2] ={tot_u,(double)tot_cells};
-      MPI_Send(&send,2,MPI_DOUBLE,MASTER,tag,MPI_COMM_WORLD);
-    }*/
 
     MPI_Barrier(MPI_COMM_WORLD);
     //if (rank == MASTER) printf("it %d\n",tt);
@@ -337,7 +321,7 @@ int main(int argc, char* argv[])
   }
   else{
     sendbufFINAL  = (double*)malloc(sizeof(double) * 4 *NSPEEDS);
-    for(ii =1;ii<local_nrows+1;ii++){
+    for(ii =0;ii<local_nrows;ii++){
       for(jj=0;jj<local_ncols;jj += 4){
         for(val =0; val<NSPEEDS;val++){
           sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
