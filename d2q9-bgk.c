@@ -205,17 +205,28 @@ int main(int argc, char* argv[])
   }
   for(jj=0;jj<local_ncols;jj++){
     if (rank == size-1){
-      top_halo[jj] = cells[jj];
-      bottom_halo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
+      top_halo[jj*HSPEEDS] = cells[jj].speeds[2];
+      top_halo[jj*HSPEEDS+1] = cells[jj].speeds[5];
+      top_halo[jj*HSPEEDS+2] = cells[jj].speeds[6];
+
+      bottom_halo[jj*HSPEEDS] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[4];
+      bottom_halo[jj*HSPEEDS+1] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[7];
+      bottom_halo[jj*HSPEEDS+2] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[8];
     }
     else if (rank == MASTER){
-      top_halo[jj] = cells[(local_nrows +rank*local_nrows) * params.nx+jj];
-      bottom_halo[jj] = cells[(size * local_nrows-1) * params.nx+jj];
+      top_halo[jj*HSPEEDS] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[2];
+      top_halo[jj*HSPEEDS+1] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[5];
+      top_halo[jj*HSPEEDS+2] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[6];
+
+      bottom_halo[jj*HSPEEDS] = cells[(size * local_nrows-1) * params.nx+jj].speeds[4];
+      bottom_halo[jj*HSPEEDS+1] = cells[(size * local_nrows-1) * params.nx+jj].speeds[7];
+      bottom_halo[jj*HSPEEDS+2] = cells[(size * local_nrows-1) * params.nx+jj].speeds[8];
     }
     else{
       top_halo[jj*HSPEEDS] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[2];
       top_halo[jj*HSPEEDS+1] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[5];
       top_halo[jj*HSPEEDS+2] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[6];
+
       bottom_halo[jj*HSPEEDS] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[4];
       bottom_halo[jj*HSPEEDS+1] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[7];
       bottom_halo[jj*HSPEEDS+2] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[8];
