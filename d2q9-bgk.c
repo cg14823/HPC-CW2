@@ -202,15 +202,15 @@ int main(int argc, char* argv[])
   for(jj=0;jj<local_ncols;jj++){
     if (rank == size-1){
       top_halo[jj] = cells[jj];
-      bottomhalo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
+      bottom_halo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
     }
     else if (rank == MASTER){
       top_halo[jj] = cells[(local_nrows +rank*local_nrows) * params.nx+jj];
-      bottomhalo[jj] = cells[(size * local_nrows-1) * params.nx+jj];
+      bottom_halo[jj] = cells[(size * local_nrows-1) * params.nx+jj];
     }
     else{
       top_halo[jj] = cells[(local_nrows +rank*local_nrows) * params.nx+jj];
-      bottomhalo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
+      bottom_halo[jj] = cells[(rank * local_nrows-1) * params.nx+jj];
     }
 
   }
