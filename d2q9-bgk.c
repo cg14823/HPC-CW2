@@ -408,7 +408,6 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
   double aw1 = params.density * params.accel / 9.0;
   double aw2 = params.density * params.accel / 36.0;
 
-  printf("accelerate\n");
 
   /* modify the 2nd row of the grid */
   int ii = local_nrows -2;
