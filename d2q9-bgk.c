@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
       printf("global[1]: %.12E\n",global[1]);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     //if (rank == MASTER) printf("it %d\n",tt);
   }
   free(sendgrid);
