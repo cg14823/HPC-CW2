@@ -229,7 +229,9 @@ int main(int argc, char* argv[])
     //  if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
+    halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
+    halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
 
     // START av_velocity
@@ -280,9 +282,9 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      printf("==timestep: %d==\n", tt);
-      printf("av velocity: %.12E\n",av_vels[tt]);
-      printf("global[1]: %.12E\n",global[1]);
+      //printf("==timestep: %d==\n", tt);
+      //printf("av velocity: %.12E\n",av_vels[tt]);
+      //printf("global[1]: %.12E\n",global[1]);
     }
     halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     // MPI_Barrier(MPI_COMM_WORLD);
@@ -331,7 +333,7 @@ int main(int argc, char* argv[])
     printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
     write_values(params, cells, obstacles, av_vels);
-    printf("WROTE SHITt\n");
+
   }
   else{
     sendbufFINAL  = (double*)malloc(sizeof(double) * 4 *NSPEEDS);
