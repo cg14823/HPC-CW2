@@ -383,7 +383,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, double
                 MPI_COMM_WORLD,&status);
     for(int x = 0; x<16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        top_halo[jj+x].val[val] = recvgrid[x*NSPEEDS+val];
+        top_halo[jj+x].speeds[val] = recvgrid[x*NSPEEDS+val];
       }
     }
 
@@ -397,11 +397,11 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, double
       }
     }
     MPI_Sendrecv(sendgrid,chunksize,MPI_DOUBLE,right,tag,
-                recvgrid,chunksize,left,tag,
+                recvgrid,chunksize,MPI_DOUBLE,left,tag,
                 MPI_COMM_WORLD,&status);
     for(int x = 0; x<16;x++){
       for(int val = 0; val<NSPEEDS; val++){
-        bottom_halo[jj+x].val[val] = recvgrid[x*NSPEEDS+val];
+        bottom_halo[jj+x].speeds[val] = recvgrid[x*NSPEEDS+val];
       }
     }
 
