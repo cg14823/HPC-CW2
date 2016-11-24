@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
     //printf("start\n");
     recvbufFINAL  = (float*)malloc(sizeof(float)*16 *NSPEEDS);
     for (int k = 1; k < size; k++){
-      int rows = calc_nrows_from_rank(k,size,params.ny)
+      int rows = calc_nrows_from_rank(k,size,params.ny);
       for(ii = 0;ii<rows;ii++){
         for(jj=0;jj<local_ncols;jj+=16){
           MPI_Recv(recvbufFINAL,16*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
