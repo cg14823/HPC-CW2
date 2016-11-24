@@ -260,17 +260,17 @@ int main(int argc, char* argv[])
         }
       }
     }
-    //double vars [2] = {tot_u,(double)tot_cells};
-    // double global[2]= {0,0};
-    //MPI_Reduce(&vars, &global, 2, MPI_DOUBLE, MPI_SUM,MASTER, MPI_COMM_WORLD);
+    double vars [2] = {tot_u,(double)tot_cells};
+    double global[2]= {0,0};
+    MPI_Reduce(&vars, &global, 2, MPI_DOUBLE, MPI_SUM,MASTER, MPI_COMM_WORLD);
 
-    /*if (rank == MASTER){
+    if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      //printf("==timestep: %d==\n", tt);
-      //printf("av velocity: %.12E\n",av_vels[tt]);
-      //printf("global[1]: %.12E\n",global[1]);
-    }*/
-
+      printf("==timestep: %d==\n", tt);
+      printf("av velocity: %.12E\n",av_vels[tt]);
+      printf("global[1]: %.12E\n",global[1]);
+    }
+    /*
     if (rank == MASTER){
       double global[2]= {tot_u,(double)tot_cells};
       double recv[2];
@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
     else{
       double send [2] ={tot_u,(double)tot_cells};
       MPI_Send(&send,2,MPI_DOUBLE,MASTER,tag,MPI_COMM_WORLD);
-    }
+    }*/
 
     MPI_Barrier(MPI_COMM_WORLD);
     //if (rank == MASTER) printf("it %d\n",tt);
