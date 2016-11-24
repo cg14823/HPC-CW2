@@ -97,8 +97,8 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
-int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows,t_speed* top_halo, t_speed* bottom_halo);
-int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows);
+int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
+int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows,t_speed* top_halo, t_speed* bottom_halo);
 int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank);
 int write_values(const t_param params, t_speed* cells, int* obstacles, double* av_vels);
 int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank, t_speed* top_halo, t_speed* bottom_halo);
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
-    propagate(params, partial_cells, partial_temp_cells,local_nrows);
+    propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
 
     // START av_velocity
@@ -467,7 +467,7 @@ int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_tem
         partial_temp_cells[ii* params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
         partial_temp_cells[ii* params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
         partial_temp_cells[ii* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
-        partial_temp_cells[ii* params.nx + jj].speeds[4] = top_halo[j].speeds[4]; /* south */
+        partial_temp_cells[ii* params.nx + jj].speeds[4] = top_halo[jj].speeds[4]; /* south */
         partial_temp_cells[ii* params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
         partial_temp_cells[ii* params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
         partial_temp_cells[ii* params.nx + jj].speeds[7] = top_halo[x_e].speeds[7]; /* south-west */
