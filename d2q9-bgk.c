@@ -116,7 +116,7 @@ float av_velocity(const t_param params, t_speed* cells, int* obstacles);
 
 /* calculate Reynolds number */
 float calc_reynolds(const t_param params, t_speed* cells, int* obstacles);
-int calc_ncols_from_rank(int rank, int size, int ny);
+int calc_nrows_from_rank(int rank, int size, int ny);
 
 /* utility functions */
 void die(const char* message, const int line, const char* file);
@@ -506,7 +506,7 @@ int calc_nrows_from_rank(int rank, int size, int ny)
   int nrows;
 
   nrows = ny / size;       /* integer division */
-  if ((nx % size) != 0) {  /* if there is a remainder */
+  if ((ny % size) != 0) {  /* if there is a remainder */
     if (rank == size - 1)
       nrows += ny % size;  /* add remainder to last rank */
   }
