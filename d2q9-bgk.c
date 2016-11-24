@@ -97,11 +97,11 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
-int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
+int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows,t_speed* top_halo, t_speed* bottom_halo);
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows);
 int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank);
 int write_values(const t_param params, t_speed* cells, int* obstacles, double* av_vels);
-int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank);
+int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank, t_speed* top_halo, t_speed* bottom_halo);
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
@@ -172,6 +172,9 @@ int main(int argc, char* argv[])
 
   t_speed *partial_cells;
   t_speed *partial_temp_cells;
+  t_speed *top_halo;
+  t_speed *bottom_halo;
+
   int tag = 0; /* scope for adding extra information to a message */
   /* iterate for maxIters timesteps */
 
@@ -184,12 +187,15 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * (local_nrows + 2));
+  partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
+
+  top_halo = (t_speed*)malloc(sizeof(t_speed) * local_ncols);
+  bottom_halo = (t_speed*)malloc(sizeof(t_speed) * local_ncols);
 
   for (ii = 0; ii< local_nrows;ii++){
     for(jj = 0; jj<local_ncols;jj++){
-      partial_cells[(ii+1) * params.nx +jj] =  cells[(ii +rank*local_nrows) * params.nx+jj];
+      partial_cells[ii* params.nx +jj] =  cells[(ii +rank*local_nrows) * params.nx+jj];
       partial_temp_cells[ii * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
     }
   }
@@ -197,21 +203,17 @@ int main(int argc, char* argv[])
   sendgrid = (double*)malloc(sizeof(double) * 16 * NSPEEDS);
   recvgrid = (double*)malloc(sizeof(double) * 16 * NSPEEDS);
 
-  if(sendgrid == NULL) printf("%d send nul\n",rank);
-  if(recvgrid == NULL) printf("%d recv nul\n",rank);
-
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
     tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-    printf("----- %d\n", params.maxIters);
     if (size != 64) printf("DAMMMMMMMMM\n");
   }
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    if (rank == MASTER) printf("it %d\n",tt);
+  //  if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-    halo_exchange(params,partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank);
+    halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     propagate(params, partial_cells, partial_temp_cells,local_nrows);
     collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
@@ -221,12 +223,12 @@ int main(int argc, char* argv[])
     double tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
     /* initialise */
     /* loop over all non-blocked cells */
-    for (ii = 1; ii < local_nrows+1; ii++)
+    for (ii = 0; ii < local_nrows; ii++)
     {
       for (jj = 0; jj < params.nx; jj++)
       {
         /* ignore occupied cells */
-        if (!obstacles[((ii-1)+rank*local_nrows)*params.nx+jj])
+        if (!obstacles[(ii+rank*local_nrows)*params.nx+jj])
         {
           int cellAccess = ii * params.nx + jj;
           /* local density total */
@@ -285,7 +287,7 @@ int main(int argc, char* argv[])
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == MASTER) printf("it %d\n",tt);
+    //if (rank == MASTER) printf("it %d\n",tt);
   }
   free(sendgrid);
   free(recvgrid);
@@ -316,9 +318,9 @@ int main(int argc, char* argv[])
       //printf("end receving from %d\n",k);
     }
     free(recvbufFINAL);
-    for (ii =1 ; ii<local_nrows+1;ii++){
+    for (ii =0 ; ii<local_nrows;ii++){
       for (jj= 0;jj < local_ncols;jj++){
-        cells[(ii-1)*params.nx +jj] = partial_cells[ii*params.nx+jj];
+        cells[ii*params.nx +jj] = partial_cells[ii*params.nx+jj];
       }
     }
 
@@ -364,7 +366,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   return EXIT_SUCCESS;
 }
 
-int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank){
+int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, double* sendgrid, double* recvgrid, int left, int right, int rank,t_speed* top_halo, t_speed* bottom_halo){
   // copy data to be send left 1st row
   MPI_Status status;
   int tag =0;
@@ -376,8 +378,8 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
 
         for(int x = 0; x<16;x++){
           for(int val = 0; val<NSPEEDS; val++){
-            sendgrid[x*NSPEEDS +val] = partial_cells[local_ncols + jj+x].speeds[val];
-            recvgrid[x*NSPEEDS +val] = partial_cells[local_nrows * local_ncols + jj+x].speeds[val];
+            sendgrid[x*NSPEEDS +val] = partial_cells[jj+x].speeds[val];
+            recvgrid[x*NSPEEDS +val] = partial_cells[(local_nrows - 1) * local_ncols + jj+x].speeds[val];
           }
         }
         MPI_Send(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,MPI_COMM_WORLD);
@@ -388,8 +390,8 @@ int halo_exchange(const t_param params,t_speed* partial_cells,int local_ncols,in
         MPI_Recv(sendgrid,16*NSPEEDS,MPI_DOUBLE,left,tag,MPI_COMM_WORLD,&status);
         for (int x = 0; x < 16;x++){
           for(int val = 0; val<NSPEEDS; val++){
-            partial_cells[(local_nrows+1) * local_ncols + jj+x].speeds[val] = recvgrid[x*NSPEEDS +val];
-            partial_cells[jj+x].speeds[val]= sendgrid[x*NSPEEDS +val];
+            top_halo[x+jj].speeds[val] =recvgrid[x*NSPEEDS +val];
+            bottom_halo[x+jj].speeds[val] =sendgrid[x*NSPEEDS +val];
           }
         }
       }
@@ -405,8 +407,10 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
   double aw1 = params.density * params.accel / 9.0;
   double aw2 = params.density * params.accel / 36.0;
 
+  printf("accelerate\n");
+
   /* modify the 2nd row of the grid */
-  int ii = local_nrows - 1;
+  int ii = local_nrows -2;
 
   for (int jj = 0; jj < params.nx; jj++)
   {
@@ -430,9 +434,9 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
   return EXIT_SUCCESS;
 }
 
-int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows)
+int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows, t_speed* top_halo, t_speed* bottom_halo)
 {
-  for (int ii = 1; ii < local_nrows+1; ii++)
+  for (int ii = 0; ii < local_nrows; ii++)
   {
     int y_n = ii + 1;
     int y_s = ii - 1;
@@ -446,15 +450,43 @@ int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_tem
       /* propagate densities to neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
-      partial_temp_cells[(ii-1)* params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
-      partial_temp_cells[(ii-1 )* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
-      partial_temp_cells[(ii-1 )* params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
-      partial_temp_cells[(ii-1) * params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+      if( ii == 0){
+        partial_temp_cells[ii* params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        partial_temp_cells[ii* params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+        partial_temp_cells[ii* params.nx + jj].speeds[2] = bottom_halo[jj].speeds[2]; /* north */
+        partial_temp_cells[ii* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+        partial_temp_cells[ii* params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
+        partial_temp_cells[ii* params.nx + jj].speeds[5] = bottom_halo[x_w].speeds[5]; /* north-east */
+        partial_temp_cells[ii* params.nx + jj].speeds[6] = bottom_halo[x_e].speeds[6]; /* north-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+
+      }
+      else if(ii == local_nrows - 1){
+        partial_temp_cells[ii* params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        partial_temp_cells[ii* params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+        partial_temp_cells[ii* params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
+        partial_temp_cells[ii* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+        partial_temp_cells[ii* params.nx + jj].speeds[4] = top_halo[j].speeds[4]; /* south */
+        partial_temp_cells[ii* params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+        partial_temp_cells[ii* params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[7] = top_halo[x_e].speeds[7]; /* south-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[8] = top_halo[x_w].speeds[8]; /* south-east */
+
+      }
+      else{
+        partial_temp_cells[ii* params.nx + jj].speeds[0] = partial_cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+        partial_temp_cells[ii* params.nx + jj].speeds[1] = partial_cells[ii * params.nx + x_w].speeds[1]; /* east */
+        partial_temp_cells[ii* params.nx + jj].speeds[2] = partial_cells[y_s * params.nx + jj].speeds[2]; /* north */
+        partial_temp_cells[ii* params.nx + jj].speeds[3] = partial_cells[ii * params.nx + x_e].speeds[3]; /* west */
+        partial_temp_cells[ii* params.nx + jj].speeds[4] = partial_cells[y_n * params.nx + jj].speeds[4]; /* south */
+        partial_temp_cells[ii* params.nx + jj].speeds[5] = partial_cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+        partial_temp_cells[ii* params.nx + jj].speeds[6] = partial_cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[7] = partial_cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+        partial_temp_cells[ii* params.nx + jj].speeds[8] = partial_cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+      }
+
+
     }
   }
 
@@ -473,37 +505,36 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
 
-  for (ii = 1; ii < local_nrows+1; ii++)
+  for (ii = 0; ii < local_nrows; ii++)
   {
     for (jj = 0; jj < params.nx; jj++)
     {
       int cellAccess = ii * params.nx + jj;
-      int cellAccess2 = (ii-1) * params.nx + jj;
       /* don't consider occupied cells */
-      if (!obstacles[(ii-1+rank*local_nrows)*params.nx+jj])
+      if (!obstacles[(ii+rank*local_nrows)*params.nx+jj])
       {
 
         /* compute local density total */
         double local_density = 0.0;
         for (int kk = 0; kk < NSPEEDS; kk++)
         {
-          local_density += partial_temp_cells[cellAccess2].speeds[kk];
+          local_density += partial_temp_cells[cellAccess].speeds[kk];
         }
         /* compute x velocity component */
-        double u_x = (partial_temp_cells[cellAccess2].speeds[1]
-                      + partial_temp_cells[cellAccess2].speeds[5]
-                      + partial_temp_cells[cellAccess2].speeds[8]
-                      - (partial_temp_cells[cellAccess2].speeds[3]
-                         + partial_temp_cells[cellAccess2].speeds[6]
-                         + partial_temp_cells[cellAccess2].speeds[7]))
+        double u_x = (partial_temp_cells[cellAccess].speeds[1]
+                      + partial_temp_cells[cellAccess].speeds[5]
+                      + partial_temp_cells[cellAccess].speeds[8]
+                      - (partial_temp_cells[cellAccess].speeds[3]
+                         + partial_temp_cells[cellAccess].speeds[6]
+                         + partial_temp_cells[cellAccess].speeds[7]))
                      / local_density;
         /* compute y velocity component */
-        double u_y = (partial_temp_cells[cellAccess2].speeds[2]
-                      + partial_temp_cells[cellAccess2].speeds[5]
-                      + partial_temp_cells[cellAccess2].speeds[6]
-                      - (partial_temp_cells[cellAccess2].speeds[4]
-                         + partial_temp_cells[cellAccess2].speeds[7]
-                         + partial_temp_cells[cellAccess2].speeds[8]))
+        double u_y = (partial_temp_cells[cellAccess].speeds[2]
+                      + partial_temp_cells[cellAccess].speeds[5]
+                      + partial_temp_cells[cellAccess].speeds[6]
+                      - (partial_temp_cells[cellAccess].speeds[4]
+                         + partial_temp_cells[cellAccess].speeds[7]
+                         + partial_temp_cells[cellAccess].speeds[8]))
                      / local_density;
 
         /* velocity squared */
@@ -527,20 +558,20 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
 
         for (int kk = 0; kk < NSPEEDS; kk++)
           {
-            partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess2].speeds[kk]
+            partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess].speeds[kk]
                                                     + params.omega
-                                                    * (d_equ[kk] - partial_temp_cells[cellAccess2].speeds[kk]);
+                                                    * (d_equ[kk] - partial_temp_cells[cellAccess].speeds[kk]);
           }
       }
       else{
-        partial_cells[cellAccess].speeds[1] = partial_temp_cells[cellAccess2].speeds[3];
-        partial_cells[cellAccess].speeds[2] = partial_temp_cells[cellAccess2].speeds[4];
-        partial_cells[cellAccess].speeds[3] = partial_temp_cells[cellAccess2].speeds[1];
-        partial_cells[cellAccess].speeds[4] = partial_temp_cells[cellAccess2].speeds[2];
-        partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess2].speeds[7];
-        partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess2].speeds[8];
-        partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess2].speeds[5];
-        partial_cells[cellAccess].speeds[8] = partial_temp_cells[cellAccess2].speeds[6];
+        partial_cells[cellAccess].speeds[1] = partial_temp_cells[cellAccess].speeds[3];
+        partial_cells[cellAccess].speeds[2] = partial_temp_cells[cellAccess].speeds[4];
+        partial_cells[cellAccess].speeds[3] = partial_temp_cells[cellAccess].speeds[1];
+        partial_cells[cellAccess].speeds[4] = partial_temp_cells[cellAccess].speeds[2];
+        partial_cells[cellAccess].speeds[5] = partial_temp_cells[cellAccess].speeds[7];
+        partial_cells[cellAccess].speeds[6] = partial_temp_cells[cellAccess].speeds[8];
+        partial_cells[cellAccess].speeds[7] = partial_temp_cells[cellAccess].speeds[5];
+        partial_cells[cellAccess].speeds[8] = partial_temp_cells[cellAccess].speeds[6];
       }
     }
   }
