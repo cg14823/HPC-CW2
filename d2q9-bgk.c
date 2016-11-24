@@ -217,8 +217,8 @@ int main(int argc, char* argv[])
 
   }
 
-  sendgrid = (float*)malloc(sizeof(float) * 16.0f * NSPEEDS);
-  recvgrid = (float*)malloc(sizeof(float) * 16.0f * NSPEEDS);
+  sendgrid = (float*)malloc(sizeof(float) * 32 * NSPEEDS);
+  recvgrid = (float*)malloc(sizeof(float) * 32 * NSPEEDS);
 
   if (rank == MASTER){
     gettimeofday(&timstr, NULL);
@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
 
     if (rank == MASTER){
       av_vels[tt] = global[0]/global[1];
-      //printf("==timestep: %d==\n", tt);
+      printf("==timestep: %d==\n", tt);
       //printf("av velocity: %.12E\n",av_vels[tt]);
       //printf("global[1]: %.12E\n",global[1]);
     }
@@ -301,16 +301,16 @@ int main(int argc, char* argv[])
     // join grid
 
     //printf("start\n");
-    recvbufFINAL  = (float*)malloc(sizeof(float)*4 *NSPEEDS);
+    recvbufFINAL  = (float*)malloc(sizeof(float)*16 *NSPEEDS);
     for (int k = 1; k < size; k++){
-      for(ii = 0;ii<local_nrows;ii++){
-        for(jj=0;jj<local_ncols;jj+=4){
-          MPI_Recv(recvbufFINAL,4*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-          for(int val =0; val <NSPEEDS; val++){
-            cells[(k*local_nrows+ii)*params.nx+jj].speeds[val] = recvbufFINAL[val];
-            cells[(k*local_nrows+ii)*params.nx+jj+1].speeds[val] = recvbufFINAL[NSPEEDS+val];
-            cells[(k*local_nrows+ii)*params.nx+jj+2].speeds[val] = recvbufFINAL[NSPEEDS*2+val];
-            cells[(k*local_nrows+ii)*params.nx+jj+3].speeds[val] = recvbufFINAL[NSPEEDS*3+val];
+      int rows = calc_nrows_from_rank(k,size,params.ny)
+      for(ii = 0;ii<rows;ii++){
+        for(jj=0;jj<local_ncols;jj+=16){
+          MPI_Recv(recvbufFINAL,16*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
+          for(int x =0;x<16;x++){
+            for(int val =0; val <NSPEEDS; val++){
+              cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * NSPEEDS +val];
+            }
           }
         }
       }
@@ -334,16 +334,15 @@ int main(int argc, char* argv[])
 
   }
   else{
-    sendbufFINAL  = (float*)malloc(sizeof(float) * 4 *NSPEEDS);
+    sendbufFINAL  = (float*)malloc(sizeof(float) * 16 *NSPEEDS);
     for(ii =0;ii<local_nrows;ii++){
-      for(jj=0;jj<local_ncols;jj += 4){
-        for(val =0; val<NSPEEDS;val++){
-          sendbufFINAL[val] = partial_cells[ii*params.nx +jj].speeds[val];
-          sendbufFINAL[NSPEEDS +val] = partial_cells[ii*params.nx +jj+1].speeds[val];
-          sendbufFINAL[2*NSPEEDS +val] = partial_cells[ii*params.nx +jj+2].speeds[val];
-          sendbufFINAL[3*NSPEEDS +val] = partial_cells[ii*params.nx +jj+3].speeds[val];
+      for(jj=0;jj<local_ncols;jj += 16){
+        for(int x =0;x<16;x++){
+          for(int val =0; val <NSPEEDS; val++){
+            sendbufFINAL[x*NSPEEDS+val] = partial_cells[ii*params.nx +jj+x].speeds[val];
+          }
         }
-        MPI_Send(sendbufFINAL,4*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
+        MPI_Send(sendbufFINAL,16*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
       }
     }
     free(sendbufFINAL);
