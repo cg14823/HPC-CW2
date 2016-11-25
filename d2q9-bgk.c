@@ -596,8 +596,9 @@ float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* pa
   float global[2]= {0.0f,0.0f};
   if (size > 1)MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
   else return vars[0]/vars[1];
+
   if (rank == MASTER) return global[0]/global[1];
-  else return 0;
+  else return 0.0f;
 
 
 }
