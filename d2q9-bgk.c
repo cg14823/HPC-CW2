@@ -260,6 +260,7 @@ int main(int argc, char* argv[])
     usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
     timstr = ru.ru_stime;
     systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+
     // join grid
     free(sendgrid);
     free(recvgrid);
@@ -273,7 +274,7 @@ int main(int argc, char* argv[])
           MPI_Recv(recvbufFINAL, chunk*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
           for(int x =0;x<chunk;x++){
             for(int val =0; val <NSPEEDS; val++){
-              cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * chunk +val];
+              cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * NSPEEDS +val];
             }
           }
         }
