@@ -61,7 +61,7 @@
 #define FINALSTATEFILE  "final_state.dat"
 #define AVVELSFILE      "av_vels.dat"
 #define MASTER 0
-#define CHUNK 16
+#define CHUNK 1024
 #define THREE 3
 
 /* struct to hold the parameter values */
@@ -192,6 +192,8 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
+	printf("size %d rank %d",size,rank);
+
   int local_nrows = calc_nrows_from_rank(rank,size,params.ny);       // all possibility nicely divicble by 64
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
@@ -239,80 +241,95 @@ int main(int argc, char* argv[])
   sendgrid = (float*)malloc(sizeof(float) * chunk * THREE);
   recvgrid = (float*)malloc(sizeof(float) * chunk * THREE);
 
-  if (rank == MASTER){
-    gettimeofday(&timstr, NULL);
-    tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-  }
+ 
+  gettimeofday(&timstr, NULL);
+  tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+ 
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
-    if(size!= 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo, chunk);
+    if(size > 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo, chunk);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     av_vels[tt] = collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank,size);
   }
-  if(rank == MASTER){
-    gettimeofday(&timstr, NULL);
-    toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-    getrusage(RUSAGE_SELF, &ru);
-    timstr = ru.ru_utime;
-    usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-    timstr = ru.ru_stime;
-    systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 
-    // join grid
-    free(sendgrid);
-    free(recvgrid);
+	gettimeofday(&timstr, NULL);
+	toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+	getrusage(RUSAGE_SELF, &ru);
+	timstr = ru.ru_utime;
+	usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+	timstr = ru.ru_stime;
+	systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+
+	if (size > 1) {
+		if (rank == MASTER) {
 
 
-    recvbufFINAL  = (float*)malloc(sizeof(float)*chunk *NSPEEDS);
-    for (int k = 1; k < size; k++){
-      int rows = calc_nrows_from_rank(k,size,params.ny);
-      for(ii = 0;ii<rows;ii++){
-        for(jj=0;jj<local_ncols;jj+= chunk){
-          MPI_Recv(recvbufFINAL, chunk*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
-          for(int x =0;x<chunk;x++){
-            for(int val =0; val <NSPEEDS; val++){
-              cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * NSPEEDS +val];
-            }
-          }
-        }
-      }
-    }
-    free(recvbufFINAL);
-    for (ii =0 ; ii<local_nrows;ii++){
-      for (jj= 0;jj < local_ncols;jj++){
-        cells[ii*params.nx +jj] = partial_cells[ii*params.nx+jj];
-      }
-    }
+			// join grid
+			free(sendgrid);
+			free(recvgrid);
 
-    /* write final values and free memory */
-    printf("==done==\n");
-    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
-    printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
-    printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-    printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
-    write_values(params, cells, obstacles, av_vels);
+			recvbufFINAL = (float*)malloc(sizeof(float)*chunk *NSPEEDS);
+			for (int k = 1; k < size; k++) {
+				int rows = calc_nrows_from_rank(k, size, params.ny);
+				for (ii = 0; ii < rows; ii++) {
+					for (jj = 0; jj < local_ncols; jj += chunk) {
+						MPI_Recv(recvbufFINAL, chunk*NSPEEDS, MPI_FLOAT, k, tag, MPI_COMM_WORLD, &status);
+						for (int x = 0; x < chunk; x++) {
+							for (int val = 0; val < NSPEEDS; val++) {
+								cells[(k*local_nrows + ii)*params.nx + jj + x].speeds[val] = recvbufFINAL[x * NSPEEDS + val];
+							}
+						}
+					}
+				}
+			}
+			free(recvbufFINAL);
+			for (ii = 0; ii < local_nrows; ii++) {
+				for (jj = 0; jj < local_ncols; jj++) {
+					cells[ii*params.nx + jj] = partial_cells[ii*params.nx + jj];
+				}
+			}
 
-  }
-  else{
-    free(sendgrid);
-    free(recvgrid);
-    sendbufFINAL  = (float*)malloc(sizeof(float) * chunk *NSPEEDS);
-    for(ii =0;ii<local_nrows;ii++){
-      for(jj=0;jj<local_ncols;jj += chunk){
-        for(int x =0;x<chunk;x++){
-          for(int val =0; val <NSPEEDS; val++){
-            sendbufFINAL[x*NSPEEDS+val] = partial_cells[ii*params.nx +jj+x].speeds[val];
-          }
-        }
-        MPI_Send(sendbufFINAL, chunk*NSPEEDS,MPI_FLOAT,MASTER,tag,MPI_COMM_WORLD);
-      }
-    }
-    free(sendbufFINAL);
-  }
+			/* write final values and free memory */
+			printf("==done==\n");
+			printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+			printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+			printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+			printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+
+			write_values(params, cells, obstacles, av_vels);
+
+		}
+		else {
+			free(sendgrid);
+			free(recvgrid);
+			sendbufFINAL = (float*)malloc(sizeof(float) * chunk *NSPEEDS);
+			for (ii = 0; ii < local_nrows; ii++) {
+				for (jj = 0; jj < local_ncols; jj += chunk) {
+					for (int x = 0; x < chunk; x++) {
+						for (int val = 0; val < NSPEEDS; val++) {
+							sendbufFINAL[x*NSPEEDS + val] = partial_cells[ii*params.nx + jj + x].speeds[val];
+						}
+					}
+					MPI_Send(sendbufFINAL, chunk*NSPEEDS, MPI_FLOAT, MASTER, tag, MPI_COMM_WORLD);
+				}
+			}
+			free(sendbufFINAL);
+		}
+	}
+	else {
+		printf("==done== single\n");
+		printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+		printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+		printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+		printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
+
+		write_values(params, cells, obstacles, av_vels);
+
+	}
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   free(partial_temp_cells);
@@ -589,12 +606,16 @@ float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* pa
   }
 
   float vars [2] = {tot_u,(float)tot_cells};
-  float global[2]= {0.0f,0.0f};
-  if (size > 1)MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-  else return vars[0]/vars[1];
+  
+	if (size > 1) {
+		float global[2] = { 0.0f,0.0f };
+		MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM, MASTER, MPI_COMM_WORLD); 
+		if (rank == MASTER) return global[0] / global[1];
+		else return 0.0f;
+	}
+  else{ return vars[0]/vars[1];}
 
-  if (rank == MASTER) return global[0]/global[1];
-  else return 0.0f;
+
 
 
 }
