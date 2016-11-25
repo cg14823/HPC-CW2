@@ -1,11 +1,11 @@
-Running on host node31-037
-Time is Thu Nov 24 12:39:56 GMT 2016
+Running on host node31-029
+Time is Fri Nov 25 18:21:21 GMT 2016
 Directory is /panfs/panasas01/cosc/cg14823/HPC/HPC-CW2
-PBS job ID is 5167201.master.cm.cluster
+PBS job ID is 5173973.master.cm.cluster
 This jobs runs on the following machines:
-node31-037 node46-002 node31-039 node31-038
+node31-029 node31-032 node31-031 node31-030
 ==done==
-Reynolds number:		3.718483826700E+01
-Elapsed time:			2.799567 (s)
-Elapsed user CPU time:		2.818571 (s)
-Elapsed system CPU time:	0.031995 (s)
+Reynolds number:		3.717171096802E+01
+Elapsed time:			1.726569 (s)
+Elapsed user CPU time:		1.757732 (s)
+Elapsed system CPU time:	0.021996 (s)

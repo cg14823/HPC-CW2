@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    if (rank == MASTER) printf("it %d\n",tt);
+    //if (rank == MASTER) printf("it %d\n",tt);
     // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     if(size!= 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
