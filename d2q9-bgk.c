@@ -340,9 +340,9 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
 
 	// send first row left and receive row from right  to put on top
 	for(int x = 0; x<local_ncols;x++){
-		sendgrid[x*THREE] = partial_cells[jj+x].speeds[4];
-		sendgrid[x*THREE+1] = partial_cells[jj+x].speeds[7];
-		sendgrid[x*THREE+2] = partial_cells[jj+x].speeds[8];
+		sendgrid[x*THREE] = partial_cells[x].speeds[4];
+		sendgrid[x*THREE+1] = partial_cells[x].speeds[7];
+		sendgrid[x*THREE+2] = partial_cells[x].speeds[8];
 
 	}
 	MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,left,tag,
