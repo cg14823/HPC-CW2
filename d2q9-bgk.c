@@ -193,7 +193,8 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  int local_nrows = calc_nrows_from_rank(rank,size,params.ny);       
+  int local_nrows = calc_nrows_from_rank(rank,size,params.ny);     
+	printf("RANK %d SIZE %d ROWs %d  COLS %d\n".rank,size,local_nrows,local_ncols);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
@@ -249,7 +250,9 @@ int main(int argc, char* argv[])
 		{
 			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
 			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
+			if (rank == MASTER) printf("pre halo exchange\n");
 			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
+			printf("post halo exchange\n");
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
 			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
 		}
