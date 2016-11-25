@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
         for(jj=0;jj<local_ncols;jj+= chunk){
           MPI_Recv(recvbufFINAL, chunk*NSPEEDS,MPI_FLOAT,k,tag,MPI_COMM_WORLD,&status);
           for(int x =0;x<chunk;x++){
-            for(int val =0; val <chunk; val++){
+            for(int val =0; val <NSPEEDS; val++){
               cells[(k*local_nrows+ii)*params.nx+jj+x].speeds[val] = recvbufFINAL[x * chunk +val];
             }
           }
