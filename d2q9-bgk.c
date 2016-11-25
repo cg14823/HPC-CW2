@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
   right = (rank + 1) % size;
 
   int local_nrows = calc_nrows_from_rank(rank,size,params.ny);     
-	printf("RANK %d SIZE %d ROWs %d  COLS %d\n".rank,size,local_nrows,local_ncols);
+	printf("RANK %d SIZE %d ROWs %d  COLS %d\n",rank,size,local_nrows,local_ncols);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
