@@ -107,6 +107,7 @@ int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_tem
 float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank,int size);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank, h_speed* top_halo, h_speed* bottom_halo, int chunk);
+int propagateSingle(const t_param params, t_speed* cells, t_speed* tmp_cells);
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
@@ -192,9 +193,8 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-	printf("size %d rank %d",size,rank);
-
   int local_nrows = calc_nrows_from_rank(rank,size,params.ny);       // all possibility nicely divicble by 64
+	printf("size %d rank %d", size, rank);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
@@ -208,6 +208,7 @@ int main(int argc, char* argv[])
       partial_temp_cells[ii * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
     }
   }
+
   for(jj=0;jj<local_ncols;jj++){
     if (rank == size-1){
       top_halo[jj].speeds[0] = cells[jj].speeds[4];
@@ -235,37 +236,34 @@ int main(int argc, char* argv[])
       bottom_halo[jj].speeds[1] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[5];
       bottom_halo[jj].speeds[2] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[6];
     }
-
   }
+
 	int chunk = (CHUNK > local_ncols) ? local_ncols : CHUNK;
   sendgrid = (float*)malloc(sizeof(float) * chunk * THREE);
   recvgrid = (float*)malloc(sizeof(float) * chunk * THREE);
 
- 
   gettimeofday(&timstr, NULL);
   tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
  
-
-  for (int tt = 0; tt < params.maxIters; tt++)
-  {
-    // !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-    if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
-    if(size > 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo, chunk);
-    propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
-    av_vels[tt] = collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank,size);
-  }
-
-	gettimeofday(&timstr, NULL);
-	toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-	getrusage(RUSAGE_SELF, &ru);
-	timstr = ru.ru_utime;
-	usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-	timstr = ru.ru_stime;
-	systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
-
 	if (size > 1) {
-		if (rank == MASTER) {
+		for (int tt = 0; tt < params.maxIters; tt++)
+		{
+			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
+			accelerate_flow(params, partial_cells, obstacles, local_nrows);
+			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
+			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
+			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
+		}
 
+		gettimeofday(&timstr, NULL);
+		toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+		getrusage(RUSAGE_SELF, &ru);
+		timstr = ru.ru_utime;
+		usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+		timstr = ru.ru_stime;
+		systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+
+		if (rank == MASTER) {
 
 			// join grid
 			free(sendgrid);
@@ -304,6 +302,15 @@ int main(int argc, char* argv[])
 
 		}
 		else {
+			for (int tt = 0; tt < params.maxIters; tt++)
+			{
+				// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
+				if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
+				halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
+				propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
+				av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
+			}
+
 			free(sendgrid);
 			free(recvgrid);
 			sendbufFINAL = (float*)malloc(sizeof(float) * chunk *NSPEEDS);
@@ -320,7 +327,23 @@ int main(int argc, char* argv[])
 			free(sendbufFINAL);
 		}
 	}
+
 	else {
+
+		for (int tt = 0; tt < params.maxIters; tt++)
+		{
+			accelerate_flow(params, partial_cells, obstacles, local_nrows);
+			propagateSingle(params, partial_cells, partial_temp_cells);
+			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
+		}
+
+		gettimeofday(&timstr, NULL);
+		toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+		getrusage(RUSAGE_SELF, &ru);
+		timstr = ru.ru_utime;
+		usrtim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
+		timstr = ru.ru_stime;
+		systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 		printf("==done== single\n");
 		printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
 		printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
@@ -425,6 +448,38 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
     }
   }
   return EXIT_SUCCESS;
+}
+
+int propagateSingle(const t_param params, t_speed* cells, t_speed* tmp_cells)
+{
+	/* loop over _all_ cells */
+	for (int ii = 0; ii < params.ny; ii++)
+	{
+		int y_n = (ii + 1) % params.ny;
+		int y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
+		for (int jj = 0; jj < params.nx; jj++)
+		{
+			/* determine indices of axis-direction neighbours
+			** respecting periodic boundary conditions (wrap around) */
+
+			int x_e = (jj + 1) % params.nx;
+			int x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+			/* propagate densities to neighbouring cells, following
+			** appropriate directions of travel and writing into
+			** scratch space grid */
+			tmp_cells[ii * params.nx + jj].speeds[0] = cells[ii * params.nx + jj].speeds[0]; /* central cell, no movement */
+			tmp_cells[ii * params.nx + jj].speeds[1] = cells[ii * params.nx + x_w].speeds[1]; /* east */
+			tmp_cells[ii * params.nx + jj].speeds[2] = cells[y_s * params.nx + jj].speeds[2]; /* north */
+			tmp_cells[ii * params.nx + jj].speeds[3] = cells[ii * params.nx + x_e].speeds[3]; /* west */
+			tmp_cells[ii * params.nx + jj].speeds[4] = cells[y_n * params.nx + jj].speeds[4]; /* south */
+			tmp_cells[ii * params.nx + jj].speeds[5] = cells[y_s * params.nx + x_w].speeds[5]; /* north-east */
+			tmp_cells[ii * params.nx + jj].speeds[6] = cells[y_s * params.nx + x_e].speeds[6]; /* north-west */
+			tmp_cells[ii * params.nx + jj].speeds[7] = cells[y_n * params.nx + x_e].speeds[7]; /* south-west */
+			tmp_cells[ii * params.nx + jj].speeds[8] = cells[y_n * params.nx + x_w].speeds[8]; /* south-east */
+		}
+	}
+
+	return EXIT_SUCCESS;
 }
 
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows, h_speed* top_halo, h_speed* bottom_halo)
