@@ -340,7 +340,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
 
 	for (int jj = 0; jj<local_ncols; jj += chunk) {
 		// send first row left and receive row from right  to put on top
-		for (int x = 0; x<CHUNK; x++) {
+		for (int x = 0; x<chunk; x++) {
 			sendgrid[x*THREE] = partial_cells[jj + x].speeds[4];
 			sendgrid[x*THREE + 1] = partial_cells[jj + x].speeds[7];
 			sendgrid[x*THREE + 2] = partial_cells[jj + x].speeds[8];
@@ -359,7 +359,7 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
 
 	for (int jj = 0; jj<local_ncols; jj += chunk) {
 		// send first row left and receive row from right  to put on top
-		for (int x = 0; x<CHUNK; x++) {
+		for (int x = 0; x<chunk; x++) {
 			sendgrid[x*THREE] = partial_cells[(local_nrows - 1)*local_ncols + jj + x].speeds[2];
 			sendgrid[x*THREE + 1] = partial_cells[(local_nrows - 1)*local_ncols + jj + x].speeds[5];
 			sendgrid[x*THREE + 2] = partial_cells[(local_nrows - 1)*local_ncols + jj + x].speeds[6];
