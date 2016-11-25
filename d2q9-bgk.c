@@ -193,8 +193,7 @@ int main(int argc, char* argv[])
   left = (rank == MASTER) ? (size - 1) : (rank - 1);
   right = (rank + 1) % size;
 
-  int local_nrows = calc_nrows_from_rank(rank,size,params.ny);       // all possibility nicely divicble by 64
-	printf("size %d rank %d", size, rank);
+  int local_nrows = calc_nrows_from_rank(rank,size,params.ny);       
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
@@ -249,7 +248,7 @@ int main(int argc, char* argv[])
 		for (int tt = 0; tt < params.maxIters; tt++)
 		{
 			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-			accelerate_flow(params, partial_cells, obstacles, local_nrows);
+			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
 			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
 			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
@@ -329,12 +328,11 @@ int main(int argc, char* argv[])
 	}
 
 	else {
-
 		for (int tt = 0; tt < params.maxIters; tt++)
 		{
-			accelerate_flow(params, partial_cells, obstacles, local_nrows);
-			propagateSingle(params, partial_cells, partial_temp_cells);
-			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
+			accelerate_flow(params, cells, obstacles, local_nrows);
+			propagateSingle(params, cells, tmp_cells);
+			av_vels[tt] = collisionrebound(params, cells, tmp_cells, obstacles, local_ncols, local_nrows, rank, size);
 		}
 
 		gettimeofday(&timstr, NULL);
@@ -351,8 +349,8 @@ int main(int argc, char* argv[])
 		printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
 		write_values(params, cells, obstacles, av_vels);
-
 	}
+
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Finalize();
   free(partial_temp_cells);
