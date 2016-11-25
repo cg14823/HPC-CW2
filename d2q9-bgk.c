@@ -250,13 +250,12 @@ int main(int argc, char* argv[])
 		{
 			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
 			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
-			if (rank == MASTER) printf("pre halo exchange\n");
+			if (rank == MASTER) printf("it %d\n",tt);
 			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
-			printf("post halo exchange\n");
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
 			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
 		}
-
+		printf("outside looop\n");
 		gettimeofday(&timstr, NULL);
 		toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 		getrusage(RUSAGE_SELF, &ru);
