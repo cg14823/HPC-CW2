@@ -104,7 +104,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows,h_speed* top_halo, h_speed* bottom_halo);
-int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank,int size);
+float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank,int size);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank, h_speed* top_halo, h_speed* bottom_halo);
 
@@ -486,7 +486,7 @@ int calc_nrows_from_rank(int rank, int size, int ny)
   return nrows;
 }
 
-int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank, int size)
+float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank, int size)
 {
   const float w0 = 4.0f / 9.0f;  /* weighting factor */
   const float w1 = 1.0f / 9.0f;  /* weighting factor */
@@ -594,11 +594,15 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
 
   float vars [2] = {tot_u,(float)tot_cells};
   float global[2]= {0.0f,0.0f};
-  if (tot_cells == 0) printf("FUCK\n");
-  if(size > 1) MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-  else return vars[0]/vars[1];
+  MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
 
-  return global[0]/global[1];
+  if (rank == MASTER){
+    printf("COLISIONREBOUND AND AVERAGE VELOSCITY, %f, %f",global[0],global [1]);
+    return global[0]/global[1];
+  }
+  else return 1.0f;
+
+
 }
 
 float av_velocity(const t_param params, t_speed* cells, int* obstacles)
