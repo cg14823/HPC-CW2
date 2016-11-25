@@ -236,8 +236,6 @@ int main(int argc, char* argv[])
 
   }
 
-  int 
-
   sendgrid = (float*)malloc(sizeof(float) * local_ncols * THREE);
   recvgrid = (float*)malloc(sizeof(float) * local_ncols * THREE);
 
@@ -351,26 +349,26 @@ int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float*
 				recvgrid,chunksize,MPI_FLOAT,right,tag,
 				MPI_COMM_WORLD,&status);
 	for(int x = 0; x<local_ncols;x++){
-		top_halo[jj+x].speeds[0] = recvgrid[x*THREE];
-		top_halo[jj+x].speeds[1] = recvgrid[x*THREE+1];
-		top_halo[jj+x].speeds[2] = recvgrid[x*THREE+2];
+		top_halo[x].speeds[0] = recvgrid[x*THREE];
+		top_halo[x].speeds[1] = recvgrid[x*THREE+1];
+		top_halo[x].speeds[2] = recvgrid[x*THREE+2];
 	}
 
 
 	// send first row left and receive row from right  to put on top
 	for(int x = 0; x<local_ncols;x++){
-			sendgrid[x*THREE] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[2];
-			sendgrid[x*THREE+1] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[5];
-			sendgrid[x*THREE+2] = partial_cells[(local_nrows-1)*local_ncols+jj+x].speeds[6];
+			sendgrid[x*THREE] = partial_cells[(local_nrows-1)*local_ncols+x].speeds[2];
+			sendgrid[x*THREE+1] = partial_cells[(local_nrows-1)*local_ncols+x].speeds[5];
+			sendgrid[x*THREE+2] = partial_cells[(local_nrows-1)*local_ncols+x].speeds[6];
 
 	}
 	MPI_Sendrecv(sendgrid,chunksize,MPI_FLOAT,right,tag,
 							recvgrid,chunksize,MPI_FLOAT,left,tag,
 							MPI_COMM_WORLD,&status);
 	for(int x = 0; x<local_ncols;x++){
-			bottom_halo[jj+x].speeds[0] = recvgrid[x*THREE];
-			bottom_halo[jj+x].speeds[1] = recvgrid[x*THREE+1];
-			bottom_halo[jj+x].speeds[2] = recvgrid[x*THREE+2];
+			bottom_halo[x].speeds[0] = recvgrid[x*THREE];
+			bottom_halo[x].speeds[1] = recvgrid[x*THREE+1];
+			bottom_halo[x].speeds[2] = recvgrid[x*THREE+2];
 	}
 
   return EXIT_SUCCESS;
