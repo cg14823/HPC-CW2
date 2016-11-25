@@ -253,7 +253,7 @@ int main(int argc, char* argv[])
     if(size!= 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
     av_vels[tt] = collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank,size);
-    if (rank == MASTER) printf("av vel  = %f\n",av_vels[tt]);
+    //if (rank == MASTER) printf("av vel  = %f\n",av_vels[tt]);
   }
   if(rank == MASTER){
     gettimeofday(&timstr, NULL);
@@ -594,13 +594,10 @@ float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* pa
 
   float vars [2] = {tot_u,(float)tot_cells};
   float global[2]= {0.0f,0.0f};
-  MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-
-  if (rank == MASTER){
-    printf("COLISIONREBOUND AND AVERAGE VELOSCITY, %f, %f",global[0],global [1]);
-    return global[0]/global[1];
-  }
-  else return 1.0f;
+  if (size > 1)MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
+  else return vars[0]/vars[1];
+  if (rank == MASTER) return global[0]/global[1];
+  else return 0;
 
 
 }
