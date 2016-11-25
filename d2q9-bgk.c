@@ -104,7 +104,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows,h_speed* top_halo, h_speed* bottom_halo);
-int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank);
+int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank,int size);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank, h_speed* top_halo, h_speed* bottom_halo);
 
@@ -252,60 +252,9 @@ int main(int argc, char* argv[])
     if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles,local_nrows);
     if(size!= 1) halo_exchange(partial_cells,local_ncols, local_nrows, sendgrid, recvgrid, left,  right, rank,top_halo,bottom_halo);
     propagate(params, partial_cells, partial_temp_cells,local_nrows,top_halo,bottom_halo);
-    float vel = collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank);
+    float vel = collisionrebound(params,partial_cells,partial_temp_cells,obstacles,local_ncols, local_nrows,rank,size);
     if (rank == MASTER) av_vels[tt] =vel;
-    // START av_velocity
-    //int    tot_cells = 0;  /* no. of cells used in calculation */
-    //float tot_u = 0.0f;          /* accumulated magnitudes of velocity for each cell */
-    /* initialise */
-    /* loop over all non-blocked cells *//*
-    for (ii = 0; ii < local_nrows; ii++)
-    {
-      for (jj = 0; jj < params.nx; jj++)
-      {
-        /* ignore occupied cells *//*
-        if (!obstacles[(ii+rank*local_nrows)*params.nx+jj])
-        {
-          int cellAccess = ii * params.nx + jj;
-          /* local density total *//*
-          float local_density = 0.0f;
 
-          for (int kk = 0; kk < NSPEEDS; kk++)
-          {
-            local_density += partial_cells[cellAccess].speeds[kk];
-          }
-
-          /* x-component of velocity *//*
-          float u_x = (partial_cells[cellAccess].speeds[1]
-                        + partial_cells[cellAccess].speeds[5]
-                        + partial_cells[cellAccess].speeds[8]
-                        - (partial_cells[cellAccess].speeds[3]
-                           + partial_cells[cellAccess].speeds[6]
-                           + partial_cells[cellAccess].speeds[7]));
-          /* compute y velocity component *//*
-          float u_y = (partial_cells[cellAccess].speeds[2]
-                        + partial_cells[cellAccess].speeds[5]
-                        + partial_cells[cellAccess].speeds[6]
-                        - (partial_cells[cellAccess].speeds[4]
-                           + partial_cells[cellAccess].speeds[7]
-                           + partial_cells[cellAccess].speeds[8]));
-          /* accumulate the norm of x- and y- velocity components *//*
-          tot_u += sqrt((u_x * u_x) + (u_y * u_y))/local_density;
-          /* increase counter of inspected cells */
-          /*tot_cells += 1;
-        }
-      }
-    }
-    float vars [2] = {tot_u,(float)tot_cells};
-    float global[2]= {0.0f,0.0f};
-    if(size != 1) MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-    else global =vars;
-    if (rank == MASTER){
-      av_vels[tt] = global[0]/global[1];
-      //printf("==timestep: %d==\n", tt);
-      //printf("av velocity: %.12E\n",av_vels[tt]);
-      //printf("global[1]: %.12E\n",global[1]);
-    }*/
   }
   if(rank == MASTER){
     gettimeofday(&timstr, NULL);
@@ -452,7 +401,58 @@ int accelerate_flow(const t_param params, t_speed* partial_cells, int* obstacles
         && (partial_cells[ii * params.nx + jj].speeds[3] - aw1) > 0.0f
         && (partial_cells[ii * params.nx + jj].speeds[6] - aw2) > 0.0f
         && (partial_cells[ii * params.nx + jj].speeds[7] - aw2) > 0.0f)
+    {    // START av_velocity
+    //int    tot_cells = 0;  /* no. of cells used in calculation */
+    //float tot_u = 0.0f;          /* accumulated magnitudes of velocity for each cell */
+    /* initialise */
+    /* loop over all non-blocked cells *//*
+    for (ii = 0; ii < local_nrows; ii++)
     {
+      for (jj = 0; jj < params.nx; jj++)
+      {
+        /* ignore occupied cells *//*
+        if (!obstacles[(ii+rank*local_nrows)*params.nx+jj])
+        {
+          int cellAccess = ii * params.nx + jj;
+          /* local density total *//*
+          float local_density = 0.0f;
+
+          for (int kk = 0; kk < NSPEEDS; kk++)
+          {
+            local_density += partial_cells[cellAccess].speeds[kk];
+          }
+
+          /* x-component of velocity *//*
+          float u_x = (partial_cells[cellAccess].speeds[1]
+                        + partial_cells[cellAccess].speeds[5]
+                        + partial_cells[cellAccess].speeds[8]
+                        - (partial_cells[cellAccess].speeds[3]
+                           + partial_cells[cellAccess].speeds[6]
+                           + partial_cells[cellAccess].speeds[7]));
+          /* compute y velocity component *//*
+          float u_y = (partial_cells[cellAccess].speeds[2]
+                        + partial_cells[cellAccess].speeds[5]
+                        + partial_cells[cellAccess].speeds[6]
+                        - (partial_cells[cellAccess].speeds[4]
+                           + partial_cells[cellAccess].speeds[7]
+                           + partial_cells[cellAccess].speeds[8]));
+          /* accumulate the norm of x- and y- velocity components *//*
+          tot_u += sqrt((u_x * u_x) + (u_y * u_y))/local_density;
+          /* increase counter of inspected cells */
+          /*tot_cells += 1;
+        }
+      }
+    }
+    float vars [2] = {tot_u,(float)tot_cells};
+    float global[2]= {0.0f,0.0f};
+    if(size != 1) MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
+    else global =vars;
+    if (rank == MASTER){
+      av_vels[tt] = global[0]/global[1];
+      //printf("==timestep: %d==\n", tt);
+      //printf("av velocity: %.12E\n",av_vels[tt]);
+      //printf("global[1]: %.12E\n",global[1]);
+    }*/
       /* increase 'east-side' densities */
       partial_cells[ii * params.nx + jj].speeds[1] += aw1;
       partial_cells[ii * params.nx + jj].speeds[5] += aw2;
@@ -538,7 +538,7 @@ int calc_nrows_from_rank(int rank, int size, int ny)
   return nrows;
 }
 
-int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank)
+int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank, int size)
 {
   const float w0 = 4.0f / 9.0f;  /* weighting factor */
   const float w1 = 1.0f / 9.0f;  /* weighting factor */
@@ -602,7 +602,7 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
         d_equ[8] = w2 * local_density * (1.0f + 3.0f * (u_sq + u_x - u_y) - 9.0f * u_x * u_y);
 
         /* relaxation step */
-        local_density = 0.0f
+        local_density = 0.0f;
         for (int kk = 0; kk < NSPEEDS; kk++)
         {
           partial_cells[cellAccess].speeds[kk] = partial_temp_cells[cellAccess].speeds[kk]
@@ -646,7 +646,7 @@ int collisionrebound(const t_param params, t_speed* partial_cells, t_speed* part
   float vars [2] = {tot_u,(float)tot_cells};
   float global[2]= {0.0f,0.0f};
   if(size != 1) MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM,MASTER, MPI_COMM_WORLD);
-  else global =vars;
+  else return vars[0]/vars[1];
 
   return global[0]/global[1];
 }
