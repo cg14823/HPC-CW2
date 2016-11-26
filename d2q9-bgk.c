@@ -301,15 +301,6 @@ int main(int argc, char* argv[])
 
 		}
 		else {
-			for (int tt = 0; tt < params.maxIters; tt++)
-			{
-				// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
-				if (rank == size - 1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
-				halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
-				propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
-				av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
-			}
-
 			free(sendgrid);
 			free(recvgrid);
 			sendbufFINAL = (float*)malloc(sizeof(float) * chunk *NSPEEDS);
