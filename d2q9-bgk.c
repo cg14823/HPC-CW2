@@ -274,7 +274,6 @@ int main(int argc, char* argv[])
 			free(sendgrid);
 			free(recvgrid);
 
-
 			recvbufFINAL = (float*)malloc(sizeof(float)*chunk *NSPEEDS);
 			for (int k = 1; k < size; k++) {
 				int rows = calc_nrows_from_rank(k, size, params.ny);
@@ -289,7 +288,6 @@ int main(int argc, char* argv[])
 					}
 				}
 			}
-			printf("AFTER RECEIVING FROM RANK 1\n");
 			free(recvbufFINAL);
 			for (ii = 0; ii < local_nrows; ii++) {
 				for (jj = 0; jj < local_ncols; jj++) {
