@@ -106,7 +106,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int lo
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows,h_speed* top_halo, h_speed* bottom_halo);
 float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles, int local_nrows,int rank,int size, int rowDisplacement);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
-int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank, h_speed* top_halo, h_speed* bottom_halo, int chunk);
+int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, h_speed* top_halo, h_speed* bottom_halo, int chunk);
 int propagateSingle(const t_param params, t_speed* cells, t_speed* tmp_cells);
 
 /* finalise, including freeing up allocated memory */
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
 		{
 			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
 			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
-			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
+			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, top_halo, bottom_halo, chunk);
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
 			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_nrows, rank, size,rowDisplacement);
 		}
@@ -362,7 +362,7 @@ int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
   return EXIT_SUCCESS;
 }
 
-int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank,h_speed* top_halo, h_speed* bottom_halo,int chunk){
+int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, h_speed* top_halo, h_speed* bottom_halo,int chunk){
   // copy data to be send left 1st row
 	MPI_Status status;
 	int tag = 0;
