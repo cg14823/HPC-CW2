@@ -194,7 +194,6 @@ int main(int argc, char* argv[])
   right = (rank + 1) % size;
 
   int local_nrows = calc_nrows_from_rank(rank,size,params.ny);     
-	printf("RANK %d SIZE %d ROWs %d  COLS %d\n",rank,size,local_nrows,local_ncols);
 
   partial_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows );
   partial_temp_cells = (t_speed*)malloc(sizeof(t_speed) * local_ncols * local_nrows);
@@ -250,12 +249,11 @@ int main(int argc, char* argv[])
 		{
 			// !!!!------------------------------------HALO EXCHANGE --------------------------------------------------------!!!!
 			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
-			if (rank == MASTER) printf("it %d\n",tt);
 			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
 			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
 		}
-		printf("outside looop\n");
+
 		gettimeofday(&timstr, NULL);
 		toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 		getrusage(RUSAGE_SELF, &ru);
@@ -265,6 +263,12 @@ int main(int argc, char* argv[])
 		systim = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
 
 		if (rank == MASTER) {
+			/* write final values and free memory */
+			printf("==done==\n");
+			printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+			printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
+			printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
+			printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
 			// join grid
 			free(sendgrid);
@@ -285,19 +289,13 @@ int main(int argc, char* argv[])
 					}
 				}
 			}
+			printf("AFTER RECEIVING FROM RANK 1\n");
 			free(recvbufFINAL);
 			for (ii = 0; ii < local_nrows; ii++) {
 				for (jj = 0; jj < local_ncols; jj++) {
 					cells[ii*params.nx + jj] = partial_cells[ii*params.nx + jj];
 				}
 			}
-
-			/* write final values and free memory */
-			printf("==done==\n");
-			printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
-			printf("Elapsed time:\t\t\t%.6lf (s)\n", toc - tic);
-			printf("Elapsed user CPU time:\t\t%.6lf (s)\n", usrtim);
-			printf("Elapsed system CPU time:\t%.6lf (s)\n", systim);
 
 			write_values(params, cells, obstacles, av_vels);
 
