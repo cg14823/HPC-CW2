@@ -104,7 +104,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles, int local_nrows);
 int propagate(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int local_nrows,h_speed* top_halo, h_speed* bottom_halo);
-float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank,int size);
+float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles, int local_nrows,int rank,int size, int rowDisplacement);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 int halo_exchange(t_speed* partial_cells,int local_ncols,int local_nrows, float* sendgrid, float* recvgrid, int left, int right, int rank, h_speed* top_halo, h_speed* bottom_halo, int chunk);
 int propagateSingle(const t_param params, t_speed* cells, t_speed* tmp_cells);
@@ -200,43 +200,46 @@ int main(int argc, char* argv[])
 
   top_halo = (h_speed*)malloc(sizeof(h_speed) * local_ncols);
   bottom_halo = (h_speed*)malloc(sizeof(h_speed) * local_ncols);
+	
+	int rowDisplacement = params.ny / size ;
 
-  for (ii = 0; ii< local_nrows;ii++){
-    for(jj = 0; jj<local_ncols;jj++){
-      partial_cells[ii* params.nx +jj] =  cells[(ii +rank*local_nrows) * params.nx+jj];
-      partial_temp_cells[ii * params.nx +jj] = tmp_cells[(ii +rank*local_nrows) *params.nx+jj];
-    }
-  }
+	for (ii = 0; ii< local_nrows; ii++) {
+		for (jj = 0; jj<local_ncols; jj++) {
+			partial_cells[ii* params.nx + jj] = cells[(ii + rank*rowDisplacement) * params.nx + jj];
+			partial_temp_cells[ii * params.nx + jj] = tmp_cells[(ii + rank*rowDisplacement) *params.nx + jj];
+		}
+	}
 
-  for(jj=0;jj<local_ncols;jj++){
-    if (rank == size-1){
-      top_halo[jj].speeds[0] = cells[jj].speeds[4];
-      top_halo[jj].speeds[1] = cells[jj].speeds[7];
-      top_halo[jj].speeds[2] = cells[jj].speeds[8];
-      bottom_halo[jj].speeds[0] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[2];
-      bottom_halo[jj].speeds[1] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[5];
-      bottom_halo[jj].speeds[2] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[6];
+	for (jj = 0; jj<local_ncols; jj++) {
+		if (rank == size - 1) {
+			top_halo[jj].speeds[0] = cells[jj].speeds[4];
+			top_halo[jj].speeds[1] = cells[jj].speeds[7];
+			top_halo[jj].speeds[2] = cells[jj].speeds[8];
+			bottom_halo[jj].speeds[0] = cells[(rank * rowDisplacement - 1) * params.nx + jj].speeds[2];
+			bottom_halo[jj].speeds[1] = cells[(rank * rowDisplacement - 1) * params.nx + jj].speeds[5];
+			bottom_halo[jj].speeds[2] = cells[(rank * rowDisplacement - 1) * params.nx + jj].speeds[6];
 
-    }
-    else if (rank == MASTER){
-      top_halo[jj].speeds[0] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[4];
-      top_halo[jj].speeds[1] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[7];
-      top_halo[jj].speeds[2] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[8];
-      bottom_halo[jj].speeds[0] = cells[(size * local_nrows-1) * params.nx+jj].speeds[2];
-      bottom_halo[jj].speeds[1] = cells[(size * local_nrows-1) * params.nx+jj].speeds[5];
-      bottom_halo[jj].speeds[2] = cells[(size * local_nrows-1) * params.nx+jj].speeds[6];
+		}
+		else if (rank == MASTER) {
+			top_halo[jj].speeds[0] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[4];
+			top_halo[jj].speeds[1] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[7];
+			top_halo[jj].speeds[2] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[8];
+			bottom_halo[jj].speeds[0] = cells[(size * local_nrows - 1) * params.nx + jj].speeds[2];
+			bottom_halo[jj].speeds[1] = cells[(size * local_nrows - 1) * params.nx + jj].speeds[5];
+			bottom_halo[jj].speeds[2] = cells[(size * local_nrows - 1) * params.nx + jj].speeds[6];
 
-    }
-    else{
-      top_halo[jj].speeds[0] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[4];
-      top_halo[jj].speeds[1] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[7];
-      top_halo[jj].speeds[2] = cells[(local_nrows +rank*local_nrows) * params.nx+jj].speeds[8];
-      bottom_halo[jj].speeds[0] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[2];
-      bottom_halo[jj].speeds[1] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[5];
-      bottom_halo[jj].speeds[2] = cells[(rank * local_nrows-1) * params.nx+jj].speeds[6];
-    }
-  }
-
+		}
+		else {
+			top_halo[jj].speeds[0] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[4];
+			top_halo[jj].speeds[1] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[7];
+			top_halo[jj].speeds[2] = cells[(local_nrows + rank*local_nrows) * params.nx + jj].speeds[8];
+			bottom_halo[jj].speeds[0] = cells[(rank * local_nrows - 1) * params.nx + jj].speeds[2];
+			bottom_halo[jj].speeds[1] = cells[(rank * local_nrows - 1) * params.nx + jj].speeds[5];
+			bottom_halo[jj].speeds[2] = cells[(rank * local_nrows - 1) * params.nx + jj].speeds[6];
+		}
+	}
+	
+  
 	int chunk = (CHUNK > local_ncols) ? local_ncols : CHUNK;
   sendgrid = (float*)malloc(sizeof(float) * chunk * THREE);
   recvgrid = (float*)malloc(sizeof(float) * chunk * THREE);
@@ -542,7 +545,7 @@ int calc_nrows_from_rank(int rank, int size, int ny)
   return nrows;
 }
 
-float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles,int local_ncols, int local_nrows,int rank, int size)
+float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* partial_temp_cells, int* obstacles, int local_nrows,int rank, int size,int rowDisplacement)
 {
   const float w0 = 4.0f / 9.0f;  /* weighting factor */
   const float w1 = 1.0f / 9.0f;  /* weighting factor */
@@ -562,7 +565,7 @@ float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* pa
     {
       int cellAccess = ii * params.nx + jj;
       /* don't consider occupied cells */
-      if (!obstacles[(ii+rank*local_nrows)*params.nx+jj])
+      if (!obstacles[(ii+rank*rowDisplacement)*params.nx+jj])
       {
 
         /* compute local density total */
