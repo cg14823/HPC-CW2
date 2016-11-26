@@ -14,7 +14,7 @@
 #! Second entry: Total amount of wall-clock time (true, elapsed time).
 #! 00:05:00 indicates 05 minutes.
 
-#PBS -l nodes=4:ppn=16,walltime=00:05:00
+#PBS -l nodes=1:ppn=1,walltime=00:08:00
 
 #! Mail to user if job aborts
 #PBS -m a
