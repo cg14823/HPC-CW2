@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
 			if (rank == size -1) accelerate_flow(params, partial_cells, obstacles, local_nrows);
 			halo_exchange(partial_cells, local_ncols, local_nrows, sendgrid, recvgrid, left, right, rank, top_halo, bottom_halo, chunk);
 			propagate(params, partial_cells, partial_temp_cells, local_nrows, top_halo, bottom_halo);
-			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_ncols, local_nrows, rank, size);
+			av_vels[tt] = collisionrebound(params, partial_cells, partial_temp_cells, obstacles, local_nrows, rank, size,rowDisplacement);
 		}
 
 		gettimeofday(&timstr, NULL);
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 						MPI_Recv(recvbufFINAL, chunk*NSPEEDS, MPI_FLOAT, k, tag, MPI_COMM_WORLD, &status);
 						for (int x = 0; x < chunk; x++) {
 							for (int val = 0; val < NSPEEDS; val++) {
-								cells[(k*rows + ii)*params.nx + jj + x].speeds[val] = recvbufFINAL[x * NSPEEDS + val];
+								cells[(k*local_nrows + ii)*params.nx + jj + x].speeds[val] = recvbufFINAL[x * NSPEEDS + val];
 							}
 						}
 					}
