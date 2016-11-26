@@ -3,7 +3,7 @@
 EXE=d2q9-bgk
 
 CC=mpicc
-CFLAGS= -std=c99 -O3 -ffast-math
+CFLAGS= -std=c99 -O3 -ffast-math -ftree-vectorize
 LIBS = -lm
 
 SIZE =128x128
