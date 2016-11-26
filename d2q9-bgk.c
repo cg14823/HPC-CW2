@@ -277,12 +277,13 @@ int main(int argc, char* argv[])
 			recvbufFINAL = (float*)malloc(sizeof(float)*chunk *NSPEEDS);
 			for (int k = 1; k < size; k++) {
 				int rows = calc_nrows_from_rank(k, size, params.ny);
+				printf("receiving from rank %d\n",k);
 				for (ii = 0; ii < rows; ii++) {
 					for (jj = 0; jj < local_ncols; jj += chunk) {
 						MPI_Recv(recvbufFINAL, chunk*NSPEEDS, MPI_FLOAT, k, tag, MPI_COMM_WORLD, &status);
 						for (int x = 0; x < chunk; x++) {
 							for (int val = 0; val < NSPEEDS; val++) {
-								cells[(k*local_nrows + ii)*params.nx + jj + x].speeds[val] = recvbufFINAL[x * NSPEEDS + val];
+								cells[(k*rows + ii)*params.nx + jj + x].speeds[val] = recvbufFINAL[x * NSPEEDS + val];
 							}
 						}
 					}
