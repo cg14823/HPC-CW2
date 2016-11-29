@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
 		{
 			accelerate_flow(params, cells, obstacles, local_nrows);
 			propagateSingle(params, cells, tmp_cells);
-			av_vels[tt] = collisionrebound(params, cells, tmp_cells, obstacles, local_ncols, local_nrows, rank, size);
+			av_vels[tt] = collisionrebound(params, cells, tmp_cells, obstacles, local_ncols, local_nrows, rank, size,rowDisplacement);
 		}
 
 		gettimeofday(&timstr, NULL);
@@ -643,15 +643,18 @@ float collisionrebound(const t_param params, t_speed* partial_cells, t_speed* pa
     }
   }
 
-  float vars [2] = {tot_u,(float)tot_cells};
+  
   
 	if (size > 1) {
+		float vars [2] = {tot_u,(float)tot_cells};
 		float global[2] = { 0.0f,0.0f };
 		MPI_Reduce(&vars, &global, 2, MPI_FLOAT, MPI_SUM, MASTER, MPI_COMM_WORLD); 
 		if (rank == MASTER) return global[0] / global[1];
 		else return 0.0f;
 	}
-  else{ return vars[0]/vars[1];}
+	else{
+		return tot_u/(float)tot_cells;
+	}
 
 
 
