@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
 		{
 			accelerate_flow(params, cells, obstacles, local_nrows);
 			propagateSingle(params, cells, tmp_cells);
-			av_vels[tt] = collisionrebound(params, cells, tmp_cells, obstacles, local_ncols, local_nrows, rank, size,rowDisplacement);
+			av_vels[tt] = collisionrebound(params, cells, tmp_cells, obstacles, local_nrows, rank, size,rowDisplacement);
 		}
 
 		gettimeofday(&timstr, NULL);
