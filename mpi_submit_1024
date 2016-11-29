@@ -14,7 +14,7 @@
 #! Second entry: Total amount of wall-clock time (true, elapsed time).
 #! 00:05:00 indicates 05 minutes.
 
-#PBS -l nodes=1:ppn=1,walltime=00:25:00
+#PBS -l nodes=1:ppn=1,walltime=04:30:00
 
 #! Mail to user if job aborts
 #PBS -m a
@@ -49,4 +49,8 @@ cat $PBS_NODEFILE > machine.file.$PBS_JOBID
 numnodes=`wc $PBS_NODEFILE | awk '{ print $1 }'`
 
 #! Run the parallel MPI executable (nodes*ppn)
+mpirun -np $numnodes -machinefile machine.file.$PBS_JOBID $application $options
+mpirun -np $numnodes -machinefile machine.file.$PBS_JOBID $application $options
+mpirun -np $numnodes -machinefile machine.file.$PBS_JOBID $application $options
+mpirun -np $numnodes -machinefile machine.file.$PBS_JOBID $application $options
 mpirun -np $numnodes -machinefile machine.file.$PBS_JOBID $application $options
